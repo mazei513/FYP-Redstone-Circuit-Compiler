@@ -1,33 +1,4 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <sstream>
-
-struct comp_pos_label
-{
-	int x;
-	int y;
-	int z;
-	std::string label;
-	std::string chunk;
-};
-
-struct relationship_table
-{
-	std::string input;
-	std::string output;
-};
-
-int current_lever_n = 1;
-int current_torch_n = 1;
-int current_lamp_n = 1;
-std::vector<comp_pos_label> component_labels;
-std::string chunk_name = "r.txt";
-
-const int REDSTONELAMP_ID = 123;
-const int LEVER_ID = 69;
-const int REDSTONEDUST_ID = 55;
+#include "main.hpp"
 
 void read_chunk_file(int read_chunk[][16][16])
 {
@@ -155,63 +126,43 @@ std::string find_active_component(int read_chunk[][16][16], int &x, int &y, int 
 	return current_component;
 }
 
-void find_component_inputs(std::vector<relationship_table> &relationships, std::string cur_component, int read_chunk[][16][16], int x, int y, int z, bool checked[][16][16])
+void component_switch_case(std::vector<relationship_table> &relationships, std::string cur_component, int read_chunk[][16][16], int x, int y, int z, bool checked[][16][16])
 {
-	checked[y][z][x] = true;
-	if(!checked[y][z+1][x])
-	{
-		switch(read_chunk[y][z+1][x])
+	switch(read_chunk[y][z][x])
 		{
 			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, read_chunk, x, y, z+1, checked);
+				find_component_inputs(relationships, cur_component, read_chunk, x, y, z, checked);
 				break;
 			case LEVER_ID:
-				relationship_table temp = {component_name(x, y, z+1), cur_component};
+				relationship_table temp = {component_name(x, y, z), cur_component};
 				relationships.push_back(temp);
 				break;
 		}
+}
+
+void find_component_inputs(std::vector<relationship_table> &relationships, std::string cur_component, int read_chunk[][16][16], int x, int y, int z, bool checked[][16][16])
+{
+	checked[y][z][x] = true;
+	
+	if(!checked[y][z+1][x])
+	{
+		component_switch_case(relationships, cur_component, read_chunk, x, y, z+1, checked);
 	}
 	
 	if(!checked[y][z-1][x])
 	{
-		switch(read_chunk[y][z-1][x])
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, read_chunk, x, y, z-1, checked);
-				break;
-			case LEVER_ID:
-				relationship_table temp = {component_name(x, y, z-1), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
+		component_switch_case(relationships, cur_component, read_chunk, x, y, z-1, checked);
+		
 	}
 	
 	if(!checked[y][z][x+1])
 	{
-		switch(read_chunk[y][z][x+1])
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, read_chunk, x+1, y, z, checked);
-				break;
-			case LEVER_ID:
-				relationship_table temp = {component_name(x+1, y, z), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
+		component_switch_case(relationships, cur_component, read_chunk, x+1, y, z, checked);
 	}
 	
 	if(!checked[y][z][x-1])
 	{
-		switch(read_chunk[y][z][x-1])
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, read_chunk, x-1, y, z, checked);
-				break;
-			case LEVER_ID:
-				relationship_table temp = {component_name(x-1, y, z), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
+		component_switch_case(relationships, cur_component, read_chunk, x-1, y, z, checked);
 	}
 }
 
@@ -221,61 +172,7 @@ void find_component_inputs(std::vector<relationship_table> &relationships, std::
 	
 	checked[y][z][x] = true;
 	
-	if(!checked[y][z+1][x])
-	{
-		switch(read_chunk[y][z+1][x])
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, read_chunk, x, y, z+1, checked);
-				break;
-			case LEVER_ID:
-				relationship_table temp = {component_name(x, y, z+1), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
-	}
-	
-	if(!checked[y][z-1][x])
-	{
-		switch(read_chunk[y][z-1][x])
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, read_chunk, x, y, z-1, checked);
-				break;
-			case LEVER_ID:
-				relationship_table temp = {component_name(x, y, z-1), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
-	}
-	
-	if(!checked[y][z][x+1])
-	{
-		switch(read_chunk[y][z][x+1])
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, read_chunk, x+1, y, z, checked);
-				break;
-			case LEVER_ID:
-				relationship_table temp = {component_name(x+1, y, z), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
-	}
-	
-	if(!checked[y][z][x-1])
-	{
-		switch(read_chunk[y][z][x-1])
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, read_chunk, x-1, y, z, checked);
-				break;
-			case LEVER_ID:
-				relationship_table temp = {component_name(x-1, y, z), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
-	}
+	find_component_inputs(relationships, cur_component, read_chunk, x, y, z, checked);
 }
 
 void interpret_circuit(int read_chunk[][16][16])
