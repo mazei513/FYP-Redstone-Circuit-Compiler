@@ -126,6 +126,43 @@ std::string find_active_component(int read_chunk[][16][16], int &x, int &y, int 
 	return current_component;
 }
 
+bool air_block(int x, int y, int z, int read_chunk[][16][16])
+{
+	if(read_chunk[y][z][x]==AIR_BLOCK_ID)
+		return true
+	
+	return false;
+}
+
+bool transparent_block(int x, int y, int z, int read_chunk[][16][16])
+{
+	for(int& i : TRANSPARENT_BLOCK_ID)
+	{
+		if(read_chunk[y][z][x]==TRANSPARENT_BLOCK_ID[i])
+			return true	
+	}
+	
+	return false;
+}
+
+bool component(int x, int y, int z, int read_chunk[][16][16])
+{
+	if(read_chunk[y][z][x]==REDSTONEDUST_ID || read_chunk[y][z][x]==REDSTONELAMP_ID || read_chunk[y][z][x]==LEVER_ID)
+		return true;
+	
+	return false;
+}
+
+bool opaque_block(int x, int y, int z, int read_chunk[][16][16])
+{
+	if(!air_block(x, y, z, read_chunk) && !transparent_block(x, y, z, read_chunk) && !component(x, y, z, read_chunk))
+	{
+		return true;
+	}
+	
+	return false;
+}
+
 void component_switch_case(std::vector<relationship_table> &relationships, std::string cur_component, int read_chunk[][16][16], int x, int y, int z, bool checked[][16][16])
 {
 	switch(read_chunk[y][z][x])
@@ -144,25 +181,105 @@ void find_component_inputs(std::vector<relationship_table> &relationships, std::
 {
 	checked[y][z][x] = true;
 	
-	if(!checked[y][z+1][x])
+	if(component(x, y, z+1, read_chunk))
 	{
-		component_switch_case(relationships, cur_component, read_chunk, x, y, z+1, checked);
+		if(!checked[y][z+1][x])
+		{
+			component_switch_case(relationships, cur_component, read_chunk, x, y, z+1, checked);
+		}
+	}
+	else
+	{
+		if(!air_block(x, y, z+1, read_chunk))
+		{
+			if(air_block(x, y+1, z, read_chunk))
+			{
+				component_switch_case(relationships, cur_component, read_chunk, x, y+1, z+1, checked);
+			}
+		}
+		else
+		{
+			if(opaque_block(x, y-1, z, read_chunk))
+			{
+				component_switch_case(relationships, cur_component, read_chunk, x, y-1, z+1, checked);
+			}
+		}
 	}
 	
-	if(!checked[y][z-1][x])
+	if(component(x, y, z-1, read_chunk))
 	{
-		component_switch_case(relationships, cur_component, read_chunk, x, y, z-1, checked);
-		
+		if(!checked[y][z-1][x])
+		{
+			component_switch_case(relationships, cur_component, read_chunk, x, y, z-1, checked);
+			
+		}		
+	}
+	else
+	{
+		if(!air_block(x, y, z-1, read_chunk))
+		{
+			if(air_block(x, y+1, z, read_chunk))
+			{
+				component_switch_case(relationships, cur_component, read_chunk, x, y+1, z-1, checked);
+			}
+		}
+		else
+		{
+			if(opaque_block(x, y-1, z, read_chunk))
+			{
+				component_switch_case(relationships, cur_component, read_chunk, x, y-1, z-1, checked);
+			}
+		}
 	}
 	
-	if(!checked[y][z][x+1])
+	if(component(x+1, y, z, read_chunk))
 	{
-		component_switch_case(relationships, cur_component, read_chunk, x+1, y, z, checked);
+		if(!checked[y][z][x+1])
+		{
+			component_switch_case(relationships, cur_component, read_chunk, x+1, y, z, checked);
+		}
+	}
+	else
+	{
+		if(!air_block(x+1, y, z, read_chunk))
+		{
+			if(air_block(x, y+1, z, read_chunk))
+			{
+				component_switch_case(relationships, cur_component, read_chunk, x+1, y+1, z, checked);
+			}
+		}
+		else
+		{
+			if(opaque_block(x, y-1, z, read_chunk))
+			{
+				component_switch_case(relationships, cur_component, read_chunk, x+1, y-1, z, checked);
+			}
+		}
 	}
 	
-	if(!checked[y][z][x-1])
+	if(component(x-1, y, z, read_chunk))
 	{
-		component_switch_case(relationships, cur_component, read_chunk, x-1, y, z, checked);
+		if(!checked[y][z][x-1])
+		{
+			component_switch_case(relationships, cur_component, read_chunk, x-1, y, z, checked);
+		}
+	}
+	else
+	{
+		if(!air_block(x-1, y, z, read_chunk))
+		{
+			if(air_block(x, y+1, z, read_chunk))
+			{
+				component_switch_case(relationships, cur_component, read_chunk, x-1, y+1, z, checked);
+			}
+		}
+		else
+		{
+			if(opaque_block(x, y-1, z, read_chunk))
+			{
+				component_switch_case(relationships, cur_component, read_chunk, x-1, y-1, z, checked);
+			}
+		}
 	}
 }
 
