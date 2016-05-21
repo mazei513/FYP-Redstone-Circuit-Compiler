@@ -19,7 +19,7 @@ struct relationship_table
 	std::string output;
 };
 
-const int TRANSPARENT_BLOCK_ID [] = 
+int TRANSPARENT_BLOCK_ID [] = 
 {
 	152, // redstone block
 	62, // active furnace
@@ -31,7 +31,7 @@ const int TRANSPARENT_BLOCK_ID [] =
 	18, 161, // leaves
 	73, 74, // redsotne ore
 	46, // TNT
-}
+};
 
 int current_lever_n = 1;
 int current_torch_n = 1;

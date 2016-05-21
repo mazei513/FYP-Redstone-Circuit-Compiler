@@ -129,7 +129,7 @@ std::string find_active_component(int read_chunk[][16][16], int &x, int &y, int 
 bool air_block(int x, int y, int z, int read_chunk[][16][16])
 {
 	if(read_chunk[y][z][x]==AIR_BLOCK_ID)
-		return true
+		return true;
 	
 	return false;
 }
@@ -139,7 +139,7 @@ bool transparent_block(int x, int y, int z, int read_chunk[][16][16])
 	for(int& i : TRANSPARENT_BLOCK_ID)
 	{
 		if(read_chunk[y][z][x]==TRANSPARENT_BLOCK_ID[i])
-			return true	
+			return true;
 	}
 	
 	return false;
