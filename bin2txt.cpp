@@ -4,7 +4,7 @@
 
 int main()
 {
-	std::ifstream fin("r.4.1.mca");
+	std::ifstream fin("58.nbt", std::fstream::binary);
 	std::ofstream fout("new.txt");
 	std::string line;
 	while(getline(fin, line, '\n'))

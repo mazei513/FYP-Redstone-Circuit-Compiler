@@ -54,3 +54,7 @@ bin2txt.cpp
 new.txt
 r.txt
 r.4.1.mca
+*.exe
+*.txt
+level.dat
+*.nbt
