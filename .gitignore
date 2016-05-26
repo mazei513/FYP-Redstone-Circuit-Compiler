@@ -58,3 +58,9 @@ r.4.1.mca
 *.txt
 level.dat
 *.nbt
+1
+ccompiler.exe
+*.lst
+ccompiler
+*.stackdump
+ccompiler.exe
