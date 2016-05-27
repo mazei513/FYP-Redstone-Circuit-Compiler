@@ -18,6 +18,7 @@ class chunk_list
 		~chunk_list(){}
 		void load_chunk_list();
 		std::string return_chunk(int n) {return chunks[n];}
+		int list_size() {return chunks.size();}
 };
 
 class chunk_class

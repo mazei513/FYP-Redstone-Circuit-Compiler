@@ -80,7 +80,8 @@ void chunk_class::extract_section_data(std::string chunk_name)
 		y_pos = tint;
 		
 		initial=true;
-		in_file.ignore(8000, 'D');
+		in_file.ignore(256, '-');
+		in_file.ignore(8000, '-');
 		for(int y=0;y<16;y++)
 		{
 			for(int z=0;z<16;z++)

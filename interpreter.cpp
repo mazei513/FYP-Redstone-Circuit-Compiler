@@ -20,6 +20,7 @@ int current_lever_n = 1;
 int current_torch_n = 1;
 int current_lamp_n = 1;
 std::vector<comp_pos_label> component_labels;
+std::vector<comp_pos_label> active_components;
 
 std::string cur_lever_label()
 {
@@ -59,16 +60,18 @@ void label_components(chunk_class chunk)
 				{
 					temp = {x, y, z, cur_lamp_label(), chunk.return_chunk()};
 					component_labels.push_back(temp);
+					active_components.push_back(temp);
 				}
 				else if(chunk.return_block(x, y, z) == LEVER_ID)
 				{
 					temp = {x, y, z, cur_lever_label(), chunk.return_chunk()};
 					component_labels.push_back(temp);
 				}
-				else if(chunk.return_block(x, y, z) == REDSTONETORCH_ID)
+				else if(chunk.return_block(x, y, z) == REDSTONETORCH_ID || chunk.return_block(x, y, z) == REDSTONETORCH_ID+1)
 				{
 					temp = {x, y, z, cur_torch_label(), chunk.return_chunk()};
 					component_labels.push_back(temp);
+					active_components.push_back(temp);
 				}
 			}
 		}
@@ -97,6 +100,26 @@ std::string component_name(int x, int y, int z, chunk_class chunk)
 	}
 }
 
+bool is_lamp(int x, int y, int z, chunk_class chunk)
+{
+	return chunk.return_block(x, y, z) == REDSTONELAMP_ID || chunk.return_block(x, y, z) == REDSTONELAMP_ID+1;
+}
+
+bool is_torch(int x, int y, int z, chunk_class chunk)
+{
+	return chunk.return_block(x, y, z) == REDSTONETORCH_ID || chunk.return_block(x, y, z) == REDSTONETORCH_ID+1;
+}
+
+bool is_lever(int x, int y, int z, chunk_class chunk)
+{
+	return chunk.return_block(x, y, z) == LEVER_ID;
+}
+
+bool is_dust(int x, int y, int z, chunk_class chunk)
+{
+	return chunk.return_block(x, y, z) == REDSTONEDUST_ID;
+}
+
 std::string find_active_component(chunk_class chunk, int &x, int &y, int &z)
 {
 	std::string current_component;
@@ -108,7 +131,7 @@ std::string find_active_component(chunk_class chunk, int &x, int &y, int &z)
 		{
 			for(int k=0;k<16 && !found;k++)
 			{
-				if(chunk.return_block(k, i, j) == REDSTONELAMP_ID || chunk.return_block(k, i, j) == REDSTONELAMP_ID+1)
+				if(is_lamp(k, i, j, chunk))
 				{
 					found = true;
 					current_component = component_name(k, i, j, chunk);
@@ -144,7 +167,7 @@ bool transparent_block(int x, int y, int z, chunk_class chunk)
 
 bool component(int x, int y, int z, chunk_class chunk)
 {
-	if(chunk.return_block(x, y, z)==REDSTONEDUST_ID || chunk.return_block(x, y, z)==REDSTONELAMP_ID || chunk.return_block(x, y, z)==LEVER_ID)
+	if(is_dust(x, y, z, chunk) || is_lamp(x, y, z, chunk) || is_lever(x, y, z, chunk) || is_torch(x, y, z, chunk))
 		return true;
 	
 	return false;
@@ -164,608 +187,320 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 {
 	relationship_table temp;
 	
-	if(component(x, y, z+1, chunk) && !checked[y][z+1][x])
+	// check dust adjacent
+	if(is_dust(x, y, z+1, chunk) && !checked[y][z+1][x])
+			find_component_inputs(relationships, cur_component, chunk, x, y, z+1, checked);
+	// else check lever adjacent
+	else if(is_lever(x, y, z+1, chunk))
 	{
-		switch(chunk.return_block(x, y, z+1))
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, chunk, x, y, z+1, checked);
-				break;
-			case LEVER_ID:
-				temp = {component_name(x, y, z+1, chunk), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
+		temp = {component_name(x, y, z+1, chunk), cur_component};
+		relationships.push_back(temp);
 	}
+	// else check torch adjacent
+	else if(is_torch(x, y, z+1, chunk))
+	{
+		temp = {component_name(x, y, z+1, chunk), cur_component};
+		relationships.push_back(temp);
+	}
+	// else check if opaque block adjacent
 	else if(opaque_block(x, y, z+1, chunk))
 	{
-		if(component(x, y+1, z+1, chunk) && air_block(x, y+1, z, chunk) && !checked[y+1][z+1][x])
-		{
-			switch(chunk.return_block(x, y+1, z+1))
-			{
-				case REDSTONEDUST_ID:
-					find_component_inputs(relationships, cur_component, chunk, x, y+1, z+1, checked);
-					break;
-				case LEVER_ID:
-					if(chunk.return_data(x, y+1, z+1) == 5 || chunk.return_data(x, y+1, z+1) == 6)
-					{
-						temp = {component_name(x, y+1, z+1, chunk), cur_component};
-						relationships.push_back(temp);
-					}
-					break;
-			}
-		}
+		// check dust above block
+		if(is_dust(x, y+1, z+1, chunk) && !opaque_block(x, y+1, z, chunk) && !checked[y+1][z+1][x])
+			find_component_inputs(relationships, cur_component, chunk, x, y+1, z+1, checked);
+		// else check lever on all sides of block
 		else
 		{
-			if(chunk.return_block(x, y, z+2) == LEVER_ID && chunk.return_data(x, y, z+2) == 3)
+			if(is_lever(x, y+1, z+1, chunk) && (chunk.return_data(x, y+1, z+1) == 5 || chunk.return_data(x, y+1, z+1) == 6))
+			{
+				temp = {component_name(x, y+1, z+1, chunk), cur_component};
+				relationships.push_back(temp);
+			}
+			if(is_lever(x, y, z+2, chunk) && chunk.return_data(x, y, z+2) == 3)
 			{
 				temp = {component_name(x, y, z+2, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			else if(chunk.return_block(x+1, y, z+1) == LEVER_ID && chunk.return_data(x+1, y, z+1) == 1)
+			if(is_lever(x+1, y, z+1, chunk) && chunk.return_data(x+1, y, z+1) == 1)
 			{
 				temp = {component_name(x+1, y, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			else if(chunk.return_block(x-1, y, z+1) == LEVER_ID && chunk.return_data(x-1, y, z+1) == 2)
+			if(is_lever(x-1, y, z+1, chunk) && chunk.return_data(x-1, y, z+1) == 2)
 			{
 				temp = {component_name(x-1, y, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
+			if(is_lever(x, y-1, z+1, chunk) && (chunk.return_data(x, y-1, z+1) == 0 || chunk.return_data(x, y-1, z+1) == 7 || chunk.return_data(x, y-1, z+1) == 3))
+			{
+				temp = {component_name(x, y-1, z+1, chunk), cur_component};
+				relationships.push_back(temp);
+			}
 		}
 	}
-	else if(component(x, y-1, z+1, chunk) && !checked[y-1][z+1][x])
+	// else check dust from adjacent below
+	else if(is_dust(x, y-1, z+1, chunk) && !checked[y-1][z+1][x])
+		find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, checked);
+	else if(is_lever(x, y-1, z+1, chunk) && chunk.return_data(x, y-1, z+1) == 3)
 	{
-		switch(chunk.return_block(x, y-1, z+1))
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, checked);
-				break;
-			case LEVER_ID:
-				if(chunk.return_data(x, y-1, z+1) == 3)
-				{
-					temp = {component_name(x, y-1, z+1, chunk), cur_component};
-					relationships.push_back(temp);
-				}
-				break;
-		}
+		temp = {component_name(x, y-1, z+1, chunk), cur_component};
+		relationships.push_back(temp);
 	}
 }
 
-north_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
+void north_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
 {
 	relationship_table temp;
 	
-	if(component(x, y, z-1, chunk) && !checked[y][z-1][x])
+	// check dust adjacent
+	if(is_dust(x, y, z-1, chunk) && !checked[y][z-1][x])
+			find_component_inputs(relationships, cur_component, chunk, x, y, z-1, checked);
+	// else check lever adjacent
+	else if(is_lever(x, y, z-1, chunk))
 	{
-		switch(chunk.return_block(x, y, z-1))
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, chunk, x, y, z-1, checked);
-				break;
-			case LEVER_ID:
-				temp = {component_name(x, y, z-1, chunk), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
+		temp = {component_name(x, y, z-1, chunk), cur_component};
+		relationships.push_back(temp);
 	}
+	// else check torch adjacent
+	else if(is_torch(x, y, z-1, chunk))
+	{
+		temp = {component_name(x, y, z-1, chunk), cur_component};
+		relationships.push_back(temp);
+	}
+	// else check if opaque block adjacent
 	else if(opaque_block(x, y, z-1, chunk))
 	{
-		if(component(x, y+1, z-1, chunk) && air_block(x, y+1, z, chunk) && !checked[y+1][z-1][x])
+		// check dust above block
+		if(is_dust(x, y+1, z-1, chunk) && !opaque_block(x, y+1, z, chunk) && !checked[y+1][z-1][x])
+			find_component_inputs(relationships, cur_component, chunk, x, y+1, z-1, checked);
+		// else check lever on all sides of block
+		else 
 		{
-			switch(chunk.return_block(x, y+1, z-1))
+			if(is_lever(x, y+1, z-1, chunk) && (chunk.return_data(x, y+1, z-1) == 5 || chunk.return_data(x, y+1, z-1) == 6))
 			{
-				case REDSTONEDUST_ID:
-					find_component_inputs(relationships, cur_component, chunk, x, y+1, z-1, checked);
-					break;
-				case LEVER_ID:
-					if(chunk.return_data(x, y+1, z-1) == 5 || chunk.return_data(x, y+1, z-1) == 6)
-					{
-						temp = {component_name(x, y+1, z-1, chunk), cur_component};
-						relationships.push_back(temp);
-					}
-					break;
+				temp = {component_name(x, y+1, z-1, chunk), cur_component};
+				relationships.push_back(temp);
 			}
-		}
-		else
-		{
-			if(chunk.return_block(x, y, z-2) == LEVER_ID && chunk.return_data(x, y, z-2) == 4)
+			if(is_lever(x, y, z-2, chunk) && chunk.return_data(x, y, z-2) == 4)
 			{
 				temp = {component_name(x, y, z-2, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			else if(chunk.return_block(x+1, y, z-1) == LEVER_ID && chunk.return_data(x+1, y, z-1) == 1)
+			if(is_lever(x+1, y, z-1, chunk) && chunk.return_data(x+1, y, z-1) == 1)
 			{
 				temp = {component_name(x+1, y, z-1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			else if(chunk.return_block(x-1, y, z-1) == LEVER_ID && chunk.return_data(x-1, y, z-1) == 2)
+			if(is_lever(x-1, y, z-1, chunk) && chunk.return_data(x-1, y, z-1) == 2)
 			{
 				temp = {component_name(x-1, y, z-1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-		}
-	}
-	else
-	{
-		if(component(x, y-1, z-1, chunk) && !checked[y-1][z-1][x])
-		{
-			switch(chunk.return_block(x, y-1, z-1))
+			if(is_lever(x, y-1, z-1, chunk) && (chunk.return_data(x, y-1, z-1) == 0 || chunk.return_data(x, y-1, z-1) == 7 || chunk.return_data(x, y-1, z-1) == 4))
 			{
-				case REDSTONEDUST_ID:
-					find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, checked);
-					break;
-				case LEVER_ID:
-					if(chunk.return_data(x, y-1, z-1) == 4)
-					{
-						temp = {component_name(x, y-1, z-1, chunk), cur_component};
-						relationships.push_back(temp);
-					}
-					break;
+				temp = {component_name(x, y-1, z-1, chunk), cur_component};
+				relationships.push_back(temp);
 			}
 		}
 	}
+	// else check dust from adjacent below
+	else if(is_dust(x, y-1, z-1, chunk) && !checked[y-1][z-1][x])
+		find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, checked);
+	else if(is_lever(x, y-1, z-1, chunk) && chunk.return_data(x, y-1, z-1) == 4)
+	{
+		temp = {component_name(x, y-1, z-1, chunk), cur_component};
+		relationships.push_back(temp);
+	}
 }
 
-east_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
+void east_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
 {
 	relationship_table temp;
 	
-	if(component(x+1, y, z, chunk) && !checked[y][z][x+1])
+	// check dust adjacent
+	if(is_dust(x+1, y, z, chunk) && !checked[y][z][x+1])
+		find_component_inputs(relationships, cur_component, chunk, x+1, y, z, checked);
+	// else check lever adjacent
+	else if(is_lever(x+1, y, z, chunk))
 	{
-		switch(chunk.return_block(x+1, y, z))
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, chunk, x+1, y, z, checked);
-				break;
-			case LEVER_ID:
-				relationship_table temp = {component_name(x+1, y, z, chunk), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
+		temp = {component_name(x+1, y, z, chunk), cur_component};
+		relationships.push_back(temp);
 	}
+	// else check torch adjacent
+	else if(is_torch(x+1, y, z, chunk))
+	{
+		temp = {component_name(x+1, y, z, chunk), cur_component};
+		relationships.push_back(temp);
+	}
+	// else check if opaque block adjacent
 	else if(opaque_block(x+1, y, z, chunk))
 	{
-		if(component(x+1, y+1, z, chunk) && air_block(x, y+1, z, chunk) && !checked[x+1][y+1][z])
+		// check dust above block
+		if(is_dust(x+1, y+1, z, chunk) && opaque_block(x, y+1, z, chunk) && !checked[x+1][y+1][z])
+			find_component_inputs(relationships, cur_component, chunk, x+1, y+1, z, checked);
+		// else check lever on all sides of block
+		else 
 		{
-			switch(chunk.return_block(x+1, y+1, z))
+			if(is_lever(x+1, y+1, z, chunk) && (chunk.return_data(x+1, y+1, z) == 5 || chunk.return_data(x+1, y+1, z) == 6))
 			{
-				case REDSTONEDUST_ID:
-					find_component_inputs(relationships, cur_component, chunk, x+1, y+1, z, checked);
-					break;
-				case LEVER_ID:
-					if(chunk.return_data(x+1, y+1, z) == 5 || chunk.return_data(x+1, y+1, z) == 6)
-					{
-						relationship_table temp = {component_name(x+1, y+1, z, chunk), cur_component};
-						relationships.push_back(temp);
-					}
-					break;
-			}
-		}
-		else
-		{
-			if(chunk.return_block(x+2, y, z) == LEVER_ID && chunk.return_data(x+2, y, z) == 1)
-			{
-				relationship_table temp = {component_name(x+2, y, z, chunk), cur_component};
+				temp = {component_name(x+1, y+1, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			else if(chunk.return_block(x+1, y, z-1) == LEVER_ID && chunk.return_data(x+1, y, z-1) == 4)
+			if(is_lever(x+2, y, z, chunk) && chunk.return_data(x+2, y, z) == 1)
 			{
-				relationship_table temp = {component_name(x+1, y, z-1, chunk), cur_component};
+				temp = {component_name(x+2, y, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			else if(chunk.return_block(x+1, y, z+1) == LEVER_ID && chunk.return_data(x+1, y, z+1) == 3)
+			if(is_lever(x+1, y, z-1, chunk) && chunk.return_data(x+1, y, z-1) == 4)
 			{
-				relationship_table temp = {component_name(x+1, y, z+1, chunk), cur_component};
+				temp = {component_name(x+1, y, z-1, chunk), cur_component};
+				relationships.push_back(temp);
+			}
+			if(is_lever(x+1, y, z+1, chunk) && chunk.return_data(x+1, y, z+1) == 3)
+			{
+				temp = {component_name(x+1, y, z+1, chunk), cur_component};
+				relationships.push_back(temp);
+			}
+			if(is_lever(x+1, y-1, z, chunk) && (chunk.return_data(x+1, y-1, z) == 0 || chunk.return_data(x+1, y-1, z) == 7 || chunk.return_data(x+1, y-1, z) == 1))
+			{
+				temp = {component_name(x+1, y-1, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 		}
 	}
-	else
+	// else check dust from adjacent below
+	else if(is_dust(x+1, y-1, z, chunk) && !checked[x+1][y-1][z])
+		find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, checked);
+	else if(is_lever(x+1, y-1, z, chunk) && chunk.return_data(x+1, y-1, z) == 1)
 	{
-		if(component(x+1, y-1, z, chunk) && !checked[x+1][y-1][z])
-		{
-			switch(chunk.return_block(x+1, y-1, z))
-			{
-				case REDSTONEDUST_ID:
-					find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, checked);
-					break;
-				case LEVER_ID:
-					if(chunk.return_data(x+1, y-1, z) == 1)
-					{
-						relationship_table temp = {component_name(x+1, y-1, z, chunk), cur_component};
-						relationships.push_back(temp);
-					}
-					break;
-			}
-		}
+		temp = {component_name(x+1, y-1, z, chunk), cur_component};
+		relationships.push_back(temp);
 	}
 }
 
-west_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
+void west_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
 {
 	relationship_table temp;
 	
-	if(component(x-1, y, z, chunk) && !checked[y][z][x-1])
+	// check dust adjacent
+	if(is_dust(x-1, y, z, chunk) && !checked[y][z][x-1])
+		find_component_inputs(relationships, cur_component, chunk, x-1, y, z, checked);
+	// else check lever adjacent
+	else if(is_lever(x-1, y, z, chunk))
 	{
-		switch(chunk.return_block(x-1, y, z))
-		{
-			case REDSTONEDUST_ID:
-				find_component_inputs(relationships, cur_component, chunk, x-1, y, z, checked);
-				break;
-			case LEVER_ID:
-				relationship_table temp = {component_name(x-1, y, z, chunk), cur_component};
-				relationships.push_back(temp);
-				break;
-		}
+		temp = {component_name(x-1, y, z, chunk), cur_component};
+		relationships.push_back(temp);
 	}
+	// else check torch adjacent
+	else if(is_torch(x-1, y, z, chunk))
+	{
+		temp = {component_name(x-1, y, z, chunk), cur_component};
+		relationships.push_back(temp);
+	}
+	// else check if opaque block adjacent
 	else if(opaque_block(x-1, y, z, chunk))
 	{
-		if(component(x-1, y+1, z, chunk) && air_block(x, y+1, z, chunk) && !checked[x-1][y+1][z])
+		// check dust above block
+		if(is_dust(x-1, y+1, z, chunk) && opaque_block(x, y+1, z, chunk) && !checked[x-1][y+1][z])
+			find_component_inputs(relationships, cur_component, chunk, x-1, y+1, z, checked);
+		// else check lever on all sides of block
+		else 
 		{
-			switch(chunk.return_block(x-1, y+1, z))
+			if(is_lever(x-1, y+1, z, chunk) && (chunk.return_data(x-1, y+1, z) == 5 || chunk.return_data(x-1, y+1, z) == 6))
 			{
-				case REDSTONEDUST_ID:
-					find_component_inputs(relationships, cur_component, chunk, x-1, y+1, z, checked);
-					break;
-				case LEVER_ID:
-					relationship_table temp = {component_name(x-1, y+1, z, chunk), cur_component};
-					relationships.push_back(temp);
-					break;
-			}
-		}
-		else
-		{
-			if(chunk.return_block(x-2, y, z) == LEVER_ID && chunk.return_data(x-2, y, z) == 1)
-			{
-				relationship_table temp = {component_name(x-2, y, z, chunk), cur_component};
+				temp = {component_name(x-1, y+1, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			else if(chunk.return_block(x-1, y, z-1) == LEVER_ID && chunk.return_data(x-1, y, z-1) == 4)
+			if(is_lever(x-2, y, z, chunk) && chunk.return_data(x-2, y, z) == 2)
 			{
-				relationship_table temp = {component_name(x-1, y, z-1, chunk), cur_component};
+				temp = {component_name(x-2, y, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			else if(chunk.return_block(x-1, y, z+1) == LEVER_ID && chunk.return_data(x-1, y, z+1) == 3)
+			if(is_lever(x-1, y, z-1, chunk) && chunk.return_data(x-1, y, z-1) == 4)
 			{
-				relationship_table temp = {component_name(x-1, y, z+1, chunk), cur_component};
+				temp = {component_name(x-1, y, z-1, chunk), cur_component};
+				relationships.push_back(temp);
+			}
+			if(is_lever(x-1, y, z+1, chunk) && chunk.return_data(x-1, y, z+1) == 3)
+			{
+				temp = {component_name(x-1, y, z+1, chunk), cur_component};
+				relationships.push_back(temp);
+			}
+			if(is_lever(x-1, y-1, z, chunk) && (chunk.return_data(x-1, y-1, z) == 0 || chunk.return_data(x-1, y-1, z) == 7 || chunk.return_data(x-1, y-1, z) == 2))
+			{
+				temp = {component_name(x-1, y-1, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 		}
 	}
-	else
+	// else check dust from adjacent below
+	else if(is_dust(x-1, y-1, z, chunk) && !checked[x-1][y-1][z])
+		find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, checked);
+	else if(is_lever(x-1, y-1, z, chunk) && chunk.return_data(x-1, y-1, z) == 2)
 	{
-		if(component(x-1, y-1, z, chunk) && !checked[x-1][y-1][z])
-		{
-			switch(chunk.return_block(x-1, y-1, z))
-			{
-				case REDSTONEDUST_ID:
-					find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, checked);
-					break;
-				case LEVER_ID:
-					if(chunk.return_data(x-1, y-1, z) == 2)
-					{
-						relationship_table temp = {component_name(x-1, y-1, z, chunk), cur_component};
-						relationships.push_back(temp);
-					}
-					break;
-			}
-		}
+		temp = {component_name(x-1, y-1, z, chunk), cur_component};
+		relationships.push_back(temp);
 	}
 }
 
 void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
 {
 	checked[y][z][x] = true;
-	// relationship_table temp;
-	
-	getchar();
 	
 	////// Check South //////
 	south_check(relationships, cur_component, chunk, x, y, z, checked);
 	
-	// if(component(x, y, z+1, chunk) && !checked[y][z+1][x])
-	// {
-		// switch(chunk.return_block(x, y, z+1))
-		// {
-			// case REDSTONEDUST_ID:
-				// find_component_inputs(relationships, cur_component, chunk, x, y, z+1, checked);
-				// break;
-			// case LEVER_ID:
-				// temp = {component_name(x, y, z+1, chunk), cur_component};
-				// relationships.push_back(temp);
-				// break;
-		// }
-	// }
-	// else if(opaque_block(x, y, z+1, chunk))
-	// {
-		// if(component(x, y+1, z+1, chunk) && air_block(x, y+1, z, chunk) && !checked[y+1][z+1][x])
-		// {
-			// switch(chunk.return_block(x, y+1, z+1))
-			// {
-				// case REDSTONEDUST_ID:
-					// find_component_inputs(relationships, cur_component, chunk, x, y+1, z+1, checked);
-					// break;
-				// case LEVER_ID:
-					// if(chunk.return_data(x, y+1, z+1) == 5 || chunk.return_data(x, y+1, z+1) == 6)
-					// {
-						// temp = {component_name(x, y+1, z+1, chunk), cur_component};
-						// relationships.push_back(temp);
-					// }
-					// break;
-			// }
-		// }
-		// else
-		// {
-			// if(chunk.return_block(x, y, z+2) == LEVER_ID && chunk.return_data(x, y, z+2) == 3)
-			// {
-				// temp = {component_name(x, y, z+2, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-			// else if(chunk.return_block(x+1, y, z+1) == LEVER_ID && chunk.return_data(x+1, y, z+1) == 1)
-			// {
-				// temp = {component_name(x+1, y, z+1, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-			// else if(chunk.return_block(x-1, y, z+1) == LEVER_ID && chunk.return_data(x-1, y, z+1) == 2)
-			// {
-				// temp = {component_name(x-1, y, z+1, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-		// }
-	// }
-	// else if(component(x, y-1, z+1, chunk) && !checked[y-1][z+1][x])
-	// {
-		// switch(chunk.return_block(x, y-1, z+1))
-		// {
-			// case REDSTONEDUST_ID:
-				// find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, checked);
-				// break;
-			// case LEVER_ID:
-				// if(chunk.return_data(x, y-1, z+1) == 3)
-				// {
-					// temp = {component_name(x, y-1, z+1, chunk), cur_component};
-					// relationships.push_back(temp);
-				// }
-				// break;
-		// }
-	// }
-	
 	////// Check North //////
 	north_check(relationships, cur_component, chunk, x, y, z, checked);
-	
-	// if(component(x, y, z-1, chunk) && !checked[y][z-1][x])
-	// {
-		// switch(chunk.return_block(x, y, z-1))
-		// {
-			// case REDSTONEDUST_ID:
-				// find_component_inputs(relationships, cur_component, chunk, x, y, z-1, checked);
-				// break;
-			// case LEVER_ID:
-				// temp = {component_name(x, y, z-1, chunk), cur_component};
-				// relationships.push_back(temp);
-				// break;
-		// }
-	// }
-	// else if(opaque_block(x, y, z-1, chunk))
-	// {
-		// if(component(x, y+1, z-1, chunk) && air_block(x, y+1, z, chunk) && !checked[y+1][z-1][x])
-		// {
-			// switch(chunk.return_block(x, y+1, z-1))
-			// {
-				// case REDSTONEDUST_ID:
-					// find_component_inputs(relationships, cur_component, chunk, x, y+1, z-1, checked);
-					// break;
-				// case LEVER_ID:
-					// if(chunk.return_data(x, y+1, z-1) == 5 || chunk.return_data(x, y+1, z-1) == 6)
-					// {
-						// temp = {component_name(x, y+1, z-1, chunk), cur_component};
-						// relationships.push_back(temp);
-					// }
-					// break;
-			// }
-		// }
-		// else
-		// {
-			// if(chunk.return_block(x, y, z-2) == LEVER_ID && chunk.return_data(x, y, z-2) == 4)
-			// {
-				// temp = {component_name(x, y, z-2, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-			// else if(chunk.return_block(x+1, y, z-1) == LEVER_ID && chunk.return_data(x+1, y, z-1) == 1)
-			// {
-				// temp = {component_name(x+1, y, z-1, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-			// else if(chunk.return_block(x-1, y, z-1) == LEVER_ID && chunk.return_data(x-1, y, z-1) == 2)
-			// {
-				// temp = {component_name(x-1, y, z-1, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-		// }
-	// }
-	// else
-	// {
-		// if(component(x, y-1, z-1, chunk) && !checked[y-1][z-1][x])
-		// {
-			// switch(chunk.return_block(x, y-1, z-1))
-			// {
-				// case REDSTONEDUST_ID:
-					// find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, checked);
-					// break;
-				// case LEVER_ID:
-					// if(chunk.return_data(x, y-1, z-1) == 4)
-					// {
-						// temp = {component_name(x, y-1, z-1, chunk), cur_component};
-						// relationships.push_back(temp);
-					// }
-					// break;
-			// }
-		// }
-	// }
 	
 	////// Check East //////
 	east_check(relationships, cur_component, chunk, x, y, z, checked);
 	
-	// if(component(x+1, y, z, chunk) && !checked[y][z][x+1])
-	// {
-		// switch(chunk.return_block(x+1, y, z))
-		// {
-			// case REDSTONEDUST_ID:
-				// find_component_inputs(relationships, cur_component, chunk, x+1, y, z, checked);
-				// break;
-			// case LEVER_ID:
-				// relationship_table temp = {component_name(x+1, y, z, chunk), cur_component};
-				// relationships.push_back(temp);
-				// break;
-		// }
-	// }
-	// else if(opaque_block(x+1, y, z, chunk))
-	// {
-		// if(component(x+1, y+1, z, chunk) && air_block(x, y+1, z, chunk) && !checked[x+1][y+1][z])
-		// {
-			// switch(chunk.return_block(x+1, y+1, z))
-			// {
-				// case REDSTONEDUST_ID:
-					// find_component_inputs(relationships, cur_component, chunk, x+1, y+1, z, checked);
-					// break;
-				// case LEVER_ID:
-					// if(chunk.return_data(x+1, y+1, z) == 5 || chunk.return_data(x+1, y+1, z) == 6)
-					// {
-						// relationship_table temp = {component_name(x+1, y+1, z, chunk), cur_component};
-						// relationships.push_back(temp);
-					// }
-					// break;
-			// }
-		// }
-		// else
-		// {
-			// if(chunk.return_block(x+2, y, z) == LEVER_ID && chunk.return_data(x+2, y, z) == 1)
-			// {
-				// relationship_table temp = {component_name(x+2, y, z, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-			// else if(chunk.return_block(x+1, y, z-1) == LEVER_ID && chunk.return_data(x+1, y, z-1) == 4)
-			// {
-				// relationship_table temp = {component_name(x+1, y, z-1, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-			// else if(chunk.return_block(x+1, y, z+1) == LEVER_ID && chunk.return_data(x+1, y, z+1) == 3)
-			// {
-				// relationship_table temp = {component_name(x+1, y, z+1, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-		// }
-	// }
-	// else
-	// {
-		// if(component(x+1, y-1, z, chunk) && !checked[x+1][y-1][z])
-		// {
-			// switch(chunk.return_block(x+1, y-1, z))
-			// {
-				// case REDSTONEDUST_ID:
-					// find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, checked);
-					// break;
-				// case LEVER_ID:
-					// if(chunk.return_data(x+1, y-1, z) == 1)
-					// {
-						// relationship_table temp = {component_name(x+1, y-1, z, chunk), cur_component};
-						// relationships.push_back(temp);
-					// }
-					// break;
-			// }
-		// }
-	// }
-	
 	////// Check West //////
 	west_check(relationships, cur_component, chunk, x, y, z, checked);
 	
-	// if(component(x-1, y, z, chunk) && !checked[y][z][x-1])
-	// {
-		// switch(chunk.return_block(x-1, y, z))
-		// {
-			// case REDSTONEDUST_ID:
-				// find_component_inputs(relationships, cur_component, chunk, x-1, y, z, checked);
-				// break;
-			// case LEVER_ID:
-				// relationship_table temp = {component_name(x-1, y, z, chunk), cur_component};
-				// relationships.push_back(temp);
-				// break;
-		// }
-	// }
-	// else if(opaque_block(x-1, y, z, chunk))
-	// {
-		// if(component(x-1, y+1, z, chunk) && air_block(x, y+1, z, chunk) && !checked[x-1][y+1][z])
-		// {
-			// switch(chunk.return_block(x-1, y+1, z))
-			// {
-				// case REDSTONEDUST_ID:
-					// find_component_inputs(relationships, cur_component, chunk, x-1, y+1, z, checked);
-					// break;
-				// case LEVER_ID:
-					// relationship_table temp = {component_name(x-1, y+1, z, chunk), cur_component};
-					// relationships.push_back(temp);
-					// break;
-			// }
-		// }
-		// else
-		// {
-			// if(chunk.return_block(x-2, y, z) == LEVER_ID && chunk.return_data(x-2, y, z) == 1)
-			// {
-				// relationship_table temp = {component_name(x-2, y, z, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-			// else if(chunk.return_block(x-1, y, z-1) == LEVER_ID && chunk.return_data(x-1, y, z-1) == 4)
-			// {
-				// relationship_table temp = {component_name(x-1, y, z-1, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-			// else if(chunk.return_block(x-1, y, z+1) == LEVER_ID && chunk.return_data(x-1, y, z+1) == 3)
-			// {
-				// relationship_table temp = {component_name(x-1, y, z+1, chunk), cur_component};
-				// relationships.push_back(temp);
-			// }
-		// }
-	// }
-	// else
-	// {
-		// if(component(x-1, y-1, z, chunk) && !checked[x-1][y-1][z])
-		// {
-			// switch(chunk.return_block(x-1, y-1, z))
-			// {
-				// case REDSTONEDUST_ID:
-					// find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, checked);
-					// break;
-				// case LEVER_ID:
-					// if(chunk.return_data(x-1, y-1, z) == 2)
-					// {
-						// relationship_table temp = {component_name(x-1, y-1, z, chunk), cur_component};
-						// relationships.push_back(temp);
-					// }
-					// break;
-			// }
-		// }
-	// }
+	checked[y][z][x] = false;
 }
 
-void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z)
+void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, std::string& chunk, int x, int y, int z)
 {
 	bool checked[16][16][16] = { };
+	chunk_class cur_chunk;
+	
+	cur_chunk.extract_section_data(chunk);
 	
 	checked[y][z][x] = true;
 	
-	find_component_inputs(relationships, cur_component, chunk, x, y, z, checked);
+	find_component_inputs(relationships, cur_component, cur_chunk, x, y, z, checked);
 }
 
-void interpret_circuit(chunk_class chunk)
+void rm_dup_relationship(std::vector<relationship_table>& relationships)
+{
+	for(int i=0; i<relationships.size(); i++)
+	{
+		for(int j=i+1; j<relationships.size(); j++)
+		{
+			if((relationships[i].output.compare(relationships[j].output) == 0) && (relationships[i].input.compare(relationships[j].input)==0))
+			{
+				relationships.erase(relationships.begin()+j-1);
+			}
+		}
+	}
+}
+
+void interpret_circuit()
 {
 	std::string cur_component;
 	int x,y,z;
 	std::vector<relationship_table> relationships;
 	
-	cur_component = find_active_component(chunk,x,y,z);
+	// cur_component = find_active_component(chunk,x,y,z);
 	
-	find_component_inputs(relationships, cur_component, chunk, x, y, z);
+	for(int i=0; i<active_components.size(); i++)
+	{
+		find_component_inputs(relationships, active_components[i].label, active_components[i].chunk, active_components[i].x, active_components[i].y, active_components[i].z);	
+	}
+	rm_dup_relationship(relationships);
 	
 	for(int i=0; i<relationships.size(); i++)
 		std::cout << relationships[i].input << " => " << relationships[i].output << std::endl;

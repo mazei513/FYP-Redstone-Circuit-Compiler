@@ -7,12 +7,17 @@ int main()
 	
 	chunks.load_chunk_list();
 	
-	cur_chunk.extract_section_data(chunks.return_chunk(0));
+	for(int i=0; i<chunks.list_size(); i++)
+	{
+		cur_chunk.extract_section_data(chunks.return_chunk(i));
 	
-	cur_chunk.print_chunk();
+		// cur_chunk.print_chunk();
+		
+		label_components(cur_chunk);
+	}
+	// print_component_labels();
 	
-	label_components(cur_chunk);
-	interpret_circuit(cur_chunk);
+	interpret_circuit();
 	
 	return 0;
 }
