@@ -65,6 +65,11 @@ void label_components(chunk_class chunk)
 					temp = {x, y, z, cur_lever_label(), chunk.return_chunk()};
 					component_labels.push_back(temp);
 				}
+				else if(chunk.return_block(x, y, z) == REDSTONETORCH_ID)
+				{
+					temp = {x, y, z, cur_torch_label(), chunk.return_chunk()};
+					component_labels.push_back(temp);
+				}
 			}
 		}
 	}

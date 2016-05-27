@@ -1,4 +1,0 @@
-#!C:\Python27\python.exe
-# EASY-INSTALL-SCRIPT: 'nbt2yaml==0.3.0','nbt2yaml'
-__requires__ = 'nbt2yaml==0.3.0'
-__import__('pkg_resources').run_script('nbt2yaml==0.3.0', 'nbt2yaml')
