@@ -45,6 +45,8 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 void north_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
 void east_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
 void west_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
+void top_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
+void bottom_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
 void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
 void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, std::string& chunk, int x, int y, int z);
 void rm_dup_relationship(std::vector<relationship_table>& relationships);

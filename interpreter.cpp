@@ -206,11 +206,20 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 	else if(opaque_block(x, y, z+1, chunk))
 	{
 		// check dust above block
-		if(is_dust(x, y+1, z+1, chunk) && !opaque_block(x, y+1, z, chunk) && !checked[y+1][z+1][x])
+		if(is_dust(x, y+1, z+1, chunk) && (!opaque_block(x, y+1, z, chunk) || !is_dust(x, y, z, chunk)) && !checked[y+1][z+1][x])
 			find_component_inputs(relationships, cur_component, chunk, x, y+1, z+1, checked);
-		// else check lever on all sides of block
 		else
 		{
+			if(!is_dust(x, y, z, chunk))
+			{
+				if(is_dust(x, y, z+2, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x, y, z+2, checked);
+				if(is_dust(x+1, y, z+1, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x+1, y, z+1, checked);
+				if(is_dust(x-1, y, z+1, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x-1, y, z+1, checked);
+			}
+			// else check lever on all sides of block
 			if(is_lever(x, y+1, z+1, chunk) && (chunk.return_data(x, y+1, z+1) == 5 || chunk.return_data(x, y+1, z+1) == 6))
 			{
 				temp = {component_name(x, y+1, z+1, chunk), cur_component};
@@ -231,7 +240,8 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 				temp = {component_name(x-1, y, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			if(is_lever(x, y-1, z+1, chunk) && (chunk.return_data(x, y-1, z+1) == 0 || chunk.return_data(x, y-1, z+1) == 7 || chunk.return_data(x, y-1, z+1) == 3))
+			// for power source from underneath opaque block, check for torches as well
+			if(is_torch(x, y-1, z+1, chunk) || (is_lever(x, y-1, z+1, chunk) && (chunk.return_data(x, y-1, z+1) == 0 || chunk.return_data(x, y-1, z+1) == 7 || chunk.return_data(x, y-1, z+1) == 3)))
 			{
 				temp = {component_name(x, y-1, z+1, chunk), cur_component};
 				relationships.push_back(temp);
@@ -271,11 +281,20 @@ void north_check(std::vector<relationship_table>& relationships, std::string& cu
 	else if(opaque_block(x, y, z-1, chunk))
 	{
 		// check dust above block
-		if(is_dust(x, y+1, z-1, chunk) && !opaque_block(x, y+1, z, chunk) && !checked[y+1][z-1][x])
+		if(is_dust(x, y+1, z-1, chunk) && (!opaque_block(x, y+1, z, chunk) || !is_dust(x, y, z, chunk)) && !checked[y+1][z-1][x])
 			find_component_inputs(relationships, cur_component, chunk, x, y+1, z-1, checked);
-		// else check lever on all sides of block
 		else 
 		{
+			if(!is_dust(x, y, z, chunk))
+			{
+				if(is_dust(x, y, z-2, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x, y, z-2, checked);
+				if(is_dust(x-1, y, z-1, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x-1, y, z-1, checked);
+				if(is_dust(x+1, y, z-1, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x+1, y, z-1, checked);
+			}
+			// else check lever on all sides of block
 			if(is_lever(x, y+1, z-1, chunk) && (chunk.return_data(x, y+1, z-1) == 5 || chunk.return_data(x, y+1, z-1) == 6))
 			{
 				temp = {component_name(x, y+1, z-1, chunk), cur_component};
@@ -296,7 +315,8 @@ void north_check(std::vector<relationship_table>& relationships, std::string& cu
 				temp = {component_name(x-1, y, z-1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			if(is_lever(x, y-1, z-1, chunk) && (chunk.return_data(x, y-1, z-1) == 0 || chunk.return_data(x, y-1, z-1) == 7 || chunk.return_data(x, y-1, z-1) == 4))
+			// for power source from underneath opaque block, check for torches as well
+			if(is_torch(x, y-1, z-1, chunk) || (is_lever(x, y-1, z-1, chunk) && (chunk.return_data(x, y-1, z-1) == 0 || chunk.return_data(x, y-1, z-1) == 7 || chunk.return_data(x, y-1, z-1) == 4)))
 			{
 				temp = {component_name(x, y-1, z-1, chunk), cur_component};
 				relationships.push_back(temp);
@@ -336,11 +356,20 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 	else if(opaque_block(x+1, y, z, chunk))
 	{
 		// check dust above block
-		if(is_dust(x+1, y+1, z, chunk) && opaque_block(x, y+1, z, chunk) && !checked[x+1][y+1][z])
+		if(is_dust(x+1, y+1, z, chunk) && (!opaque_block(x, y+1, z, chunk) || !is_dust(x, y, z, chunk)) && !checked[y+1][z][x+1])
 			find_component_inputs(relationships, cur_component, chunk, x+1, y+1, z, checked);
-		// else check lever on all sides of block
 		else 
 		{
+			if(!is_dust(x, y, z, chunk))
+			{
+				if(is_dust(x+2, y, z, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x+2, y, z, checked);
+				if(is_dust(x+1, y, z+1, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x+1, y, z+1, checked);
+				if(is_dust(x+1, y, z-1, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x+1, y, z-1, checked);
+			}
+			// else check lever on all sides of block
 			if(is_lever(x+1, y+1, z, chunk) && (chunk.return_data(x+1, y+1, z) == 5 || chunk.return_data(x+1, y+1, z) == 6))
 			{
 				temp = {component_name(x+1, y+1, z, chunk), cur_component};
@@ -361,7 +390,8 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 				temp = {component_name(x+1, y, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			if(is_lever(x+1, y-1, z, chunk) && (chunk.return_data(x+1, y-1, z) == 0 || chunk.return_data(x+1, y-1, z) == 7 || chunk.return_data(x+1, y-1, z) == 1))
+			// for power source from underneath opaque block, check for torches as well
+			if(is_torch(x+1, y-1, z, chunk) || (is_lever(x+1, y-1, z, chunk) && (chunk.return_data(x+1, y-1, z) == 0 || chunk.return_data(x+1, y-1, z) == 7 || chunk.return_data(x+1, y-1, z) == 1)))
 			{
 				temp = {component_name(x+1, y-1, z, chunk), cur_component};
 				relationships.push_back(temp);
@@ -369,8 +399,10 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 		}
 	}
 	// else check dust from adjacent below
-	else if(is_dust(x+1, y-1, z, chunk) && !checked[x+1][y-1][z])
+	else if(is_dust(x+1, y-1, z, chunk) && !checked[y-1][z][x+1])
+	{
 		find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, checked);
+	}
 	else if(is_lever(x+1, y-1, z, chunk) && chunk.return_data(x+1, y-1, z) == 1)
 	{
 		temp = {component_name(x+1, y-1, z, chunk), cur_component};
@@ -401,11 +433,21 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 	else if(opaque_block(x-1, y, z, chunk))
 	{
 		// check dust above block
-		if(is_dust(x-1, y+1, z, chunk) && opaque_block(x, y+1, z, chunk) && !checked[x-1][y+1][z])
+		if(is_dust(x-1, y+1, z, chunk) && (!opaque_block(x, y+1, z, chunk) || !is_dust(x, y, z, chunk)) && !checked[y+1][z][x-1])
 			find_component_inputs(relationships, cur_component, chunk, x-1, y+1, z, checked);
-		// else check lever on all sides of block
 		else 
 		{
+			if(!is_dust(x, y, z, chunk))
+			{
+				if(is_dust(x-2, y, z, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x-2, y, z, checked);
+				if(is_dust(x-1, y, z+1, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x-1, y, z+1, checked);
+				if(is_dust(x-1, y, z-1, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x-1, y, z-1, checked);
+				
+			}
+			// else check lever on all sides of block
 			if(is_lever(x-1, y+1, z, chunk) && (chunk.return_data(x-1, y+1, z) == 5 || chunk.return_data(x-1, y+1, z) == 6))
 			{
 				temp = {component_name(x-1, y+1, z, chunk), cur_component};
@@ -426,7 +468,8 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 				temp = {component_name(x-1, y, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
-			if(is_lever(x-1, y-1, z, chunk) && (chunk.return_data(x-1, y-1, z) == 0 || chunk.return_data(x-1, y-1, z) == 7 || chunk.return_data(x-1, y-1, z) == 2))
+			// for power source from underneath opaque block, check for torches as well
+			if(is_torch(x-1, y-1, z, chunk) || (is_lever(x-1, y-1, z, chunk) && (chunk.return_data(x-1, y-1, z) == 0 || chunk.return_data(x-1, y-1, z) == 7 || chunk.return_data(x-1, y-1, z) == 2)))
 			{
 				temp = {component_name(x-1, y-1, z, chunk), cur_component};
 				relationships.push_back(temp);
@@ -434,7 +477,7 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 		}
 	}
 	// else check dust from adjacent below
-	else if(is_dust(x-1, y-1, z, chunk) && !checked[x-1][y-1][z])
+	else if(is_dust(x-1, y-1, z, chunk) && !checked[y-1][z][x-1])
 		find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, checked);
 	else if(is_lever(x-1, y-1, z, chunk) && chunk.return_data(x-1, y-1, z) == 2)
 	{
@@ -443,21 +486,110 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 	}
 }
 
+void top_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
+{
+	relationship_table temp;
+	
+	if(opaque_block(x, y+1, z, chunk))
+	{
+		if(is_lever(x, y+2, z, chunk) && (chunk.return_data(x, y+2, z) == 5 || chunk.return_data(x, y+2, z) == 6))
+		{
+			temp = {component_name(x, y+2, z, chunk), cur_component};
+			relationships.push_back(temp);
+		}
+		if(is_lever(x-1, y+1, z, chunk) && chunk.return_data(x-1, y+1, z) == 2)
+		{
+			temp = {component_name(x-1, y+1, z, chunk), cur_component};
+			relationships.push_back(temp);
+		}
+		if(is_lever(x+1, y+1, z, chunk) && chunk.return_data(x+1, y+1, z) == 1)
+		{
+			temp = {component_name(x+1, y+1, z, chunk), cur_component};
+			relationships.push_back(temp);
+		}
+		if(is_lever(x, y+1, z+1, chunk) && chunk.return_data(x, y+1, z+1) == 3)
+		{
+			temp = {component_name(x, y+1, z+1, chunk), cur_component};
+			relationships.push_back(temp);
+		}
+		// for power source from underneath opaque block, check for torches as well
+		if(is_lever(x, y+1, z-1, chunk) && chunk.return_data(x, y+1, z-1) == 4)
+		{
+			temp = {component_name(x, y+1, z-1, chunk), cur_component};
+			relationships.push_back(temp);
+		}
+	}
+}
+
+void bottom_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
+{
+	relationship_table temp;
+	
+	if(is_torch(x, y-2, z, chunk) || (is_lever(x, y-2, z, chunk) && (chunk.return_data(x, y-2, z) == 0 || chunk.return_data(x, y-2, z) == 7)))
+	{
+		temp = {component_name(x, y-2, z, chunk), cur_component};
+		relationships.push_back(temp);
+	}
+	if(!is_dust(x, y, z, chunk) && opaque_block(x, y-1, z, chunk))
+	{
+		if(is_dust(x-1, y-1, z, chunk))
+			find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, checked);
+		if(is_dust(x+1, y-1, z, chunk))
+			find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, checked);
+		if(is_dust(x, y-1, z-1, chunk))
+			find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, checked);
+		if(is_dust(x, y-1, z+1, chunk))
+			find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, checked);
+	}
+}
+
 void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16])
 {
 	checked[y][z][x] = true;
 	
-	////// Check South //////
-	south_check(relationships, cur_component, chunk, x, y, z, checked);
-	
-	////// Check North //////
-	north_check(relationships, cur_component, chunk, x, y, z, checked);
-	
-	////// Check East //////
-	east_check(relationships, cur_component, chunk, x, y, z, checked);
-	
-	////// Check West //////
-	west_check(relationships, cur_component, chunk, x, y, z, checked);
+	if(is_lamp(x, y, z, chunk) || is_dust(x, y, z, chunk))
+	{
+		////// Check South //////
+		south_check(relationships, cur_component, chunk, x, y, z, checked);
+		
+		////// Check North //////
+		north_check(relationships, cur_component, chunk, x, y, z, checked);
+		
+		////// Check East //////
+		east_check(relationships, cur_component, chunk, x, y, z, checked);
+		
+		////// Check West //////
+		west_check(relationships, cur_component, chunk, x, y, z, checked);
+		
+		////// Check Top //////
+		top_check(relationships, cur_component, chunk, x, y, z, checked);
+		
+		////// Check Bottom //////
+		bottom_check(relationships, cur_component, chunk, x, y, z, checked);
+	}
+	else if(is_torch(x, y, z, chunk))
+	{
+		if(chunk.return_data(x, y, z) == 1)
+		{
+			west_check(relationships, cur_component, chunk, x, y, z, checked);
+		}
+		if(chunk.return_data(x, y, z) == 2)
+		{
+			east_check(relationships, cur_component, chunk, x, y, z, checked);
+		}
+		if(chunk.return_data(x, y, z) == 3)
+		{
+			north_check(relationships, cur_component, chunk, x, y, z, checked);
+		}
+		if(chunk.return_data(x, y, z) == 4)
+		{
+			south_check(relationships, cur_component, chunk, x, y, z, checked);
+		}
+		if(chunk.return_data(x, y, z) == 5)
+		{
+			bottom_check(relationships, cur_component, chunk, x, y, z, checked);
+		}
+	}
 	
 	checked[y][z][x] = false;
 }
