@@ -50,18 +50,11 @@ Temporary Items
 .exe
 
 # Various files
-bin2txt.cpp
-new.txt
-r.txt
-r.4.1.mca
-*.exe
-*.txt
-level.dat
-*.nbt
-1
-ccompiler.exe
+.exe
+.txt
+.nbt
+.lst
+.stackdump
 *.lst
-ccompiler
-*.stackdump
-ccompiler.exe
-ccompiler.exe
+*.nbt
+*.txt
