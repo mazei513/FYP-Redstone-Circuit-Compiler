@@ -11,7 +11,7 @@ int main()
 	{
 		cur_chunk.extract_section_data(chunks.return_chunk(i));
 	
-		// cur_chunk.print_chunk();
+		cur_chunk.print_chunk();
 		
 		label_components(cur_chunk);
 	}

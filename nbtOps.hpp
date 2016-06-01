@@ -32,6 +32,7 @@ class chunk_class
 		int z_pos;
 		int y_pos;
 		bool open_chunk_file(std::string chunk, std::ifstream& in_file);
+		std::string new_chunk_str(int x, int z);
 	public:
 		chunk_class(){}
 		~chunk_class(){}
@@ -41,7 +42,7 @@ class chunk_class
 		int return_zPos(){return z_pos;}
 		std::string return_chunk(){return chunk;}
 		void extract_section_data(std::string chunk_name);
-		// void extract_block_data(std::string current_file);
+		void chunk_bound(int x, int z, int next_x, int next_z);
 		void print_chunk();
 };
 #endif
