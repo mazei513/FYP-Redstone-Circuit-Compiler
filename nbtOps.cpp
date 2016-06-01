@@ -117,13 +117,56 @@ void chunk_class::extract_section_data(std::string chunk_name)
 			}
 		}
 		
-		in_file.ignore(1000000, 'x');
+		in_file.ignore(2000, 'x');
 		in_file.ignore(256, ':');
 		in_file >> x_pos;
 		
 		in_file.close();
 	}
 }
+
+// void chunk_class::extract_block_data(std::string current_file)
+// {
+	// std::ifstream in_file(current_file.c_str());
+	
+	// if(!in_file.is_open())
+	// {
+		// std::cout << "Failed to open " << current_file << std::endl;
+	// }
+	// else
+	// {
+		// std::string temp;
+		// char c;
+		// bool initial = true;
+		
+		// while(std::getline(in_file, temp))
+		// {
+			// if(temp.find("Sections")!=std::string::npos)
+			// {
+				// for(int y=0;y<16;y++)
+				// {
+					// for(int z=0;z<16;z++)
+					// {
+						// for(int x=0;x<16;x++)
+						// {
+							// if(initial)
+							// {
+								// in_file.ignore(256, '\"');
+								// initial=false;
+							// }
+							// in_file >> temp;
+							// if(temp.compare("\\")==0)
+								// in_file >> temp;
+							// int tint = std::stoul(temp, nullptr, 16);
+							// blocks[y][z][x] = tint;
+						// }
+					// }
+				// }
+			// }
+		// }
+		// in_file.close();
+	// }
+// }
 
 void chunk_class::print_chunk()
 {
@@ -154,63 +197,22 @@ void chunk_class::print_chunk()
 	}
 }
 
-std::string chunk_class::new_chunk_str(int x, int z)
-{
-	std::string new_chunk = "r.";
-	std::string temp_str;
-	int temp_int;
-	std::stringstream ss;
+// int main()
+// {
+	// chunk_list chunks;
+	// chunk_class cur_chunk;
 	
-	temp_int = x/32;
-	ss << temp_int;
-	ss >> temp_str;
-	new_chunk += temp_str;
+	// chunks.load_chunk_list();
 	
-	new_chunk += ".";
+	// for(int i=0; i < chunks.size(); i++)
+	// {
+		// std::cout << chunks[i] << std::endl;
+	// }
 	
-	temp_int = z/32;
-	ss << temp_int;
-	ss >> temp_str;
-	new_chunk += temp_str;
+	// extract_block_data(blocks, current_file);
+	// cur_chunk.extract_section_data(chunks.return_chunk(0));
 	
-	new_chunk += ".";
+	// cur_chunk.print_chunk();
 	
-	temp_int = (x%32) + (z%32)*32;
-	ss << temp_int;
-	ss >> temp_str;
-	new_chunk += temp_str;
-	
-	new_chunk += ".nbt";
-}
-
-void chunk_class::chunk_bound(int& x, int& z, int next_x, int next_z)
-{
-	// check if next coords is within chunk
-	if(next_x > 15)
-	{
-		// shift by correct amount
-		x-=16;
-		
-		// shift current chunk position
-		x_pos++;
-	}
-	else if(next_x < 0)
-	{
-		x+= 16;
-		x_pos--;
-	}
-	
-	if(next_z > 15)
-	{
-		z-=16;
-		z_pos++;
-	}
-	else if(next_z < 0)
-	{
-		z+=16;
-		z_pos--;
-	}
-	
-	//load new chunk
-	extract_section_data(new_chunk_str(x_pos, z_pos));
-}
+	// return 0;
+// }
