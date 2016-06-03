@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++11 -Wl,--stack,16777216
+CFLAGS=-std=c++11 -Wl,--stack,16777216 -Os
 LFLAG=-c
 
 all: ccompiler clean

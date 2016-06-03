@@ -23,6 +23,13 @@ struct relationship_table
 	std::string output;
 };
 
+struct bool_chunk
+{
+	bool checked;
+	std::string chunk;
+	bool_chunk():checked(false),chunk("") { }
+};
+
 const int REDSTONELAMP_ID = 123;
 const int REDSTONETORCH_ID = 75;
 const int LEVER_ID = 69;
@@ -41,14 +48,14 @@ bool air_block(int x, int y, int z, chunk_class chunk);
 bool transparent_block(int x, int y, int z, chunk_class chunk);
 bool component(int x, int y, int z, chunk_class chunk);
 bool opaque_block(int x, int y, int z, chunk_class chunk);
-void south_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
-void north_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
-void east_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
-void west_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
-void top_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
-void bottom_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
-void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, bool checked[][16][16]);
+void south_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31]);
+void north_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31]);
+void east_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31]);
+void west_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31]);
+void top_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31]);
+void bottom_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31]);
+void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31]);
 void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, std::string& chunk, int x, int y, int z);
 void rm_dup_relationship(std::vector<relationship_table>& relationships);
-void interpret_circuit();
+std::vector<relationship_table> interpret_circuit();
 #endif
