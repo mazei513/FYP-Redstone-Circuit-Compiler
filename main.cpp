@@ -4,6 +4,7 @@ int main()
 {
 	chunk_list chunks;
 	chunk_class cur_chunk;
+	std::vector<relationship_table> relationships;
 	
 	chunks.load_chunk_list();
 	
@@ -17,7 +18,7 @@ int main()
 	}
 	// print_component_labels();
 	
-	interpret_circuit();
+	relationships = interpret_circuit();
 	
 	return 0;
 }
