@@ -659,7 +659,6 @@ void find_component_inputs(std::vector<relationship_table>& relationships, std::
 {
 	checked[offset_y][offset_z][offset_x].checked = true;
 	checked[offset_y][offset_z][offset_x].chunk = chunk.return_chunk();
-	getchar();
 	
 	if(is_lamp(x, y, z, chunk) || is_dust(x, y, z, chunk))
 	{

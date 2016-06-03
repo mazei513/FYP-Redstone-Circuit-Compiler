@@ -2,6 +2,7 @@
 cd ..
 mkdir chunks
 cd nbt
+echo Converting nbt files to YAML
 FOR /D %%G IN ("r.*") DO (
 	FOR %%i IN ("%%G/*.nbt") DO call :loop %%G %%i
 )
@@ -12,9 +13,6 @@ goto :eof
 :loop
 call :checkinstances
 if %INSTANCES% LSS 5 (
-    rem just a dummy program that waits instead of doing useful stuff
-    rem but suffices for now
-    echo Starting processing instance for %1.%2
     start /wait /b python nbt2yaml -n %~1/%~2 > ../chunks/%~1.%~2
     goto :eof
 )
