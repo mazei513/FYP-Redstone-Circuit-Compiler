@@ -50,11 +50,9 @@ Temporary Items
 .exe
 
 # Various files
-.exe
-.txt
-.nbt
-.lst
-.stackdump
 *.lst
 *.nbt
 *.txt
+*.mca
+*.bin
+*.exe
