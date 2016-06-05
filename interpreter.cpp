@@ -1,6 +1,6 @@
-#include "interpreter.hpp"
 #ifndef __interpreter_cpp__
 #define __interpreter_cpp__
+#include "interpreter.hpp"
 
 int TRANSPARENT_BLOCK_ID [] = 
 {
@@ -183,14 +183,16 @@ bool opaque_block(int x, int y, int z, chunk_class chunk)
 	return false;
 }
 
-void south_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31])
+void south_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31], short power)
 {
+	if(power == 0)
+		return;
 	relationship_table temp;
 	
 	// check dust adjacent
 	chunk.chunk_bound(x, z, x, z+1);
 	if(is_dust(x, y, z+1, chunk) && !checked[offset_y][offset_z+1][offset_x].checked)
-			find_component_inputs(relationships, cur_component, chunk, x, y, z+1, offset_x, offset_y, offset_z+1, checked);
+			find_component_inputs(relationships, cur_component, chunk, x, y, z+1, offset_x, offset_y, offset_z+1, checked, power-1);
 	// else check lever adjacent
 	else if(is_lever(x, y, z+1, chunk))
 	{
@@ -211,7 +213,7 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 		{
 			chunk.chunk_bound(x, z, x, z);
 			if(!opaque_block(x, y+1, z, chunk) || !is_dust(x, y, z, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x, y+1, z+1, offset_x, offset_y+1, offset_z+1, checked);
+				find_component_inputs(relationships, cur_component, chunk, x, y+1, z+1, offset_x, offset_y+1, offset_z+1, checked, power-1);
 			chunk.chunk_bound(x, z, x, z+1);
 		}
 		else
@@ -221,13 +223,13 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 			{
 				chunk.chunk_bound(x, z, x, z+2);
 				if(is_dust(x, y, z+2, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x, y, z+2, offset_x, offset_y, offset_z+2, checked);
+					find_component_inputs(relationships, cur_component, chunk, x, y, z+2, offset_x, offset_y, offset_z+2, checked, power-1);
 				chunk.chunk_bound(x, z, x+1, z+1);
 				if(is_dust(x+1, y, z+1, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x+1, y, z+1, offset_x+1, offset_y, offset_z+1, checked);
+					find_component_inputs(relationships, cur_component, chunk, x+1, y, z+1, offset_x+1, offset_y, offset_z+1, checked, power-1);
 				chunk.chunk_bound(x, z, x-1, z+1);
 				if(is_dust(x-1, y, z+1, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x-1, y, z+1, offset_x-1, offset_y, offset_z+1, checked);
+					find_component_inputs(relationships, cur_component, chunk, x-1, y, z+1, offset_x-1, offset_y, offset_z+1, checked, power-1);
 			}
 			// else check lever on all sides of block
 			chunk.chunk_bound(x, z, x, z+1);
@@ -265,7 +267,7 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 	}
 	// else check dust from adjacent below
 	else if(is_dust(x, y-1, z+1, chunk) && !checked[offset_y-1][offset_z+1][offset_x].checked)
-		find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked);
+		find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked, power-1);
 	else if(is_lever(x, y-1, z+1, chunk) && chunk.return_data(x, y-1, z+1) == 3)
 	{
 		temp = {component_name(x, y-1, z+1, chunk), cur_component};
@@ -274,14 +276,16 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 	chunk.chunk_bound(x, z, x, z);
 }
 
-void north_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31])
+void north_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31], short power)
 {
+	if(power == 0)
+		return;
 	relationship_table temp;
 	
 	// check dust adjacent
 	chunk.chunk_bound(x, z, x, z-1);
 	if(is_dust(x, y, z-1, chunk) && !checked[offset_y][offset_z-1][offset_x].checked)
-			find_component_inputs(relationships, cur_component, chunk, x, y, z-1, offset_x, offset_y, offset_z-1, checked);
+			find_component_inputs(relationships, cur_component, chunk, x, y, z-1, offset_x, offset_y, offset_z-1, checked, power-1);
 	// else check lever adjacent
 	else if(is_lever(x, y, z-1, chunk))
 	{
@@ -302,7 +306,7 @@ void north_check(std::vector<relationship_table>& relationships, std::string& cu
 		{
 			chunk.chunk_bound(x, z, x, z);
 			if(!opaque_block(x, y+1, z, chunk) || !is_dust(x, y, z, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x, y+1, z-1, offset_x, offset_y+1, offset_z-1, checked);
+				find_component_inputs(relationships, cur_component, chunk, x, y+1, z-1, offset_x, offset_y+1, offset_z-1, checked, power-1);
 			chunk.chunk_bound(x, z, x, z-1);
 		}
 		else 
@@ -312,13 +316,13 @@ void north_check(std::vector<relationship_table>& relationships, std::string& cu
 			{
 				chunk.chunk_bound(x, z, x, z-2);
 				if(is_dust(x, y, z-2, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x, y, z-2, offset_x, offset_y, offset_z-2, checked);
+					find_component_inputs(relationships, cur_component, chunk, x, y, z-2, offset_x, offset_y, offset_z-2, checked, power-1);
 				chunk.chunk_bound(x, z, x-1, z-1);
 				if(is_dust(x-1, y, z-1, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x-1, y, z-1, offset_x-1, offset_y, offset_z-1, checked);
+					find_component_inputs(relationships, cur_component, chunk, x-1, y, z-1, offset_x-1, offset_y, offset_z-1, checked, power-1);
 				chunk.chunk_bound(x, z, x+1, z-1);
 				if(is_dust(x+1, y, z-1, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x+1, y, z-1, offset_x+1, offset_y, offset_z-1, checked);
+					find_component_inputs(relationships, cur_component, chunk, x+1, y, z-1, offset_x+1, offset_y, offset_z-1, checked, power-1);
 			}
 			// else check lever on all sides of block
 			chunk.chunk_bound(x, z, x, z-1);
@@ -356,7 +360,7 @@ void north_check(std::vector<relationship_table>& relationships, std::string& cu
 	}
 	// else check dust from adjacent below
 	else if(is_dust(x, y-1, z-1, chunk) && !checked[offset_y-1][offset_z-1][offset_x].checked)
-		find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked);
+		find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked, power-1);
 	else if(is_lever(x, y-1, z-1, chunk) && chunk.return_data(x, y-1, z-1) == 4)
 	{
 		temp = {component_name(x, y-1, z-1, chunk), cur_component};
@@ -365,15 +369,17 @@ void north_check(std::vector<relationship_table>& relationships, std::string& cu
 	chunk.chunk_bound(x, z, x, z);
 }
 
-void east_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31])
+void east_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31], short power)
 {
+	if(power == 0)
+		return;
 	relationship_table temp;
 	
 	// check dust adjacent
 	chunk.chunk_bound(x, z, x+1, z);
 	checked[offset_y][offset_z][offset_x+1].chunk = chunk.return_chunk();
 	if(is_dust(x+1, y, z, chunk) && !checked[offset_y][offset_z][offset_x+1].checked)
-		find_component_inputs(relationships, cur_component, chunk, x+1, y, z, offset_x+1, offset_y, offset_z, checked);
+		find_component_inputs(relationships, cur_component, chunk, x+1, y, z, offset_x+1, offset_y, offset_z, checked, power-1);
 	// else check lever adjacent
 	else if(is_lever(x+1, y, z, chunk))
 	{
@@ -394,7 +400,7 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 		{
 			chunk.chunk_bound(x, z, x, z);
 			if(!opaque_block(x, y+1, z, chunk) || !is_dust(x, y, z, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x+1, y+1, z, offset_x+1, offset_y+1, offset_z, checked);
+				find_component_inputs(relationships, cur_component, chunk, x+1, y+1, z, offset_x+1, offset_y+1, offset_z, checked, power-1);
 			chunk.chunk_bound(x, z, x+1, z);
 		}
 		else 
@@ -404,13 +410,13 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 			{
 				chunk.chunk_bound(x, z, x+2, z);
 				if(is_dust(x+2, y, z, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x+2, y, z, offset_x+2, offset_y, offset_z, checked);
+					find_component_inputs(relationships, cur_component, chunk, x+2, y, z, offset_x+2, offset_y, offset_z, checked, power-1);
 				chunk.chunk_bound(x, z, x+1, z+1);
 				if(is_dust(x+1, y, z+1, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x+1, y, z+1, offset_x+1, offset_y, offset_z+1, checked);
+					find_component_inputs(relationships, cur_component, chunk, x+1, y, z+1, offset_x+1, offset_y, offset_z+1, checked, power-1);
 				chunk.chunk_bound(x, z, x+1, z-1);
 				if(is_dust(x+1, y, z-1, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x+1, y, z-1, offset_x+1, offset_y, offset_z-1, checked);
+					find_component_inputs(relationships, cur_component, chunk, x+1, y, z-1, offset_x+1, offset_y, offset_z-1, checked, power-1);
 			}
 			// else check lever on all sides of block
 			chunk.chunk_bound(x, z, x+1, z);
@@ -451,7 +457,7 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 	// else check dust from adjacent below
 	else if(is_dust(x+1, y-1, z, chunk) && !checked[offset_y-1][offset_z][offset_x+1].checked)
 	{
-		find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked);
+		find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked, power-1);
 	}
 	else if(is_lever(x+1, y-1, z, chunk) && chunk.return_data(x+1, y-1, z) == 1)
 	{
@@ -461,14 +467,16 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 	chunk.chunk_bound(x, z, x, z);
 }
 
-void west_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31])
+void west_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31], short power)
 {
+	if(power == 0)
+		return;
 	relationship_table temp;
 	
 	// check dust adjacent
 	chunk.chunk_bound(x, z, x-1, z);
 	if(is_dust(x-1, y, z, chunk) && !checked[offset_y][offset_z][offset_x-1].checked)
-		find_component_inputs(relationships, cur_component, chunk, x-1, y, z, offset_x-1, offset_y, offset_z, checked);
+		find_component_inputs(relationships, cur_component, chunk, x-1, y, z, offset_x-1, offset_y, offset_z, checked, power-1);
 	// else check lever adjacent
 	else if(is_lever(x-1, y, z, chunk))
 	{
@@ -489,7 +497,7 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 		{
 			chunk.chunk_bound(x, z, x, z);
 			if(!opaque_block(x, y+1, z, chunk) || !is_dust(x, y, z, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x-1, y+1, z, offset_x-1, offset_y+1, offset_z, checked);
+				find_component_inputs(relationships, cur_component, chunk, x-1, y+1, z, offset_x-1, offset_y+1, offset_z, checked, power-1);
 			chunk.chunk_bound(x, z, x-1, z);
 		}
 		else 
@@ -499,13 +507,13 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 			{
 				chunk.chunk_bound(x, z, x-2, z);
 				if(is_dust(x-2, y, z, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x-2, y, z, offset_x-2, offset_y, offset_z, checked);
+					find_component_inputs(relationships, cur_component, chunk, x-2, y, z, offset_x-2, offset_y, offset_z, checked, power-1);
 				chunk.chunk_bound(x, z, x-1, z+1);
 				if(is_dust(x-1, y, z+1, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x-1, y, z+1, offset_x-1, offset_y, offset_z+1, checked);
+					find_component_inputs(relationships, cur_component, chunk, x-1, y, z+1, offset_x-1, offset_y, offset_z+1, checked, power-1);
 				chunk.chunk_bound(x, z, x-1, z-1);
 				if(is_dust(x-1, y, z-1, chunk))
-					find_component_inputs(relationships, cur_component, chunk, x-1, y, z-1, offset_x-1, offset_y, offset_z-1, checked);
+					find_component_inputs(relationships, cur_component, chunk, x-1, y, z-1, offset_x-1, offset_y, offset_z-1, checked, power-1);
 				
 			}
 			chunk.chunk_bound(x, z, x-1, z);
@@ -544,7 +552,7 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 	}
 	// else check dust from adjacent below
 	else if(is_dust(x-1, y-1, z, chunk) && !checked[offset_y-1][offset_z][offset_x-1].checked)
-		find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked);
+		find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked, power-1);
 	else if(is_lever(x-1, y-1, z, chunk) && chunk.return_data(x-1, y-1, z) == 2)
 	{
 		temp = {component_name(x-1, y-1, z, chunk), cur_component};
@@ -553,8 +561,10 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 	chunk.chunk_bound(x, z, x, z);
 }
 
-void top_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31])
+void top_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31], short power)
 {
+	if(power == 0)
+		return;
 	relationship_table temp;
 	
 	if(opaque_block(x, y+1, z, chunk))
@@ -593,8 +603,10 @@ void top_check(std::vector<relationship_table>& relationships, std::string& cur_
 	chunk.chunk_bound(x, z, x, z);
 }
 
-void bottom_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31])
+void bottom_check(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31], short power)
 {
+	if(power == 0)
+		return;
 	relationship_table temp;
 	
 	if(is_torch(x, y-1, z, chunk) || (is_lever(x, y-1, z, chunk) && (chunk.return_data(x, y-1, z) == 0 || chunk.return_data(x, y-1, z) == 7)))
@@ -640,22 +652,22 @@ void bottom_check(std::vector<relationship_table>& relationships, std::string& c
 		{
 			chunk.chunk_bound(x, z, x-1, z);
 			if(is_dust(x-1, y-1, z, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked);
+				find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked, power-1);
 			chunk.chunk_bound(x, z, x+1, z);
 			if(is_dust(x+1, y-1, z, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked);
+				find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked, power-1);
 			chunk.chunk_bound(x, z, x, z-1);
 			if(is_dust(x, y-1, z-1, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked);
+				find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked, power-1);
 			chunk.chunk_bound(x, z, x, z+1);
 			if(is_dust(x, y-1, z+1, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked);
+				find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked, power-1);
 		}
 	}
 	chunk.chunk_bound(x, z, x, z);
 }
 
-void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31])
+void find_component_inputs(std::vector<relationship_table>& relationships, std::string& cur_component, chunk_class& chunk, int x, int y, int z, short offset_x, short offset_y, short offset_z, bool_chunk checked[][31][31], short power)
 {
 	checked[offset_y][offset_z][offset_x].checked = true;
 	checked[offset_y][offset_z][offset_x].chunk = chunk.return_chunk();
@@ -663,44 +675,44 @@ void find_component_inputs(std::vector<relationship_table>& relationships, std::
 	if(is_lamp(x, y, z, chunk) || is_dust(x, y, z, chunk))
 	{
 		////// Check South //////
-		south_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+		south_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		
 		////// Check North //////
-		north_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+		north_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		
 		////// Check East //////
-		east_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+		east_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		
 		////// Check West //////
-		west_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+		west_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		
 		////// Check Top //////
-		top_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+		top_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		
 		////// Check Bottom //////
-		bottom_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+		bottom_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 	}
 	else if(is_torch(x, y, z, chunk))
 	{
 		if(chunk.return_data(x, y, z) == 1)
 		{
-			west_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+			west_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		}
 		if(chunk.return_data(x, y, z) == 2)
 		{
-			east_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+			east_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		}
 		if(chunk.return_data(x, y, z) == 3)
 		{
-			north_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+			north_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		}
 		if(chunk.return_data(x, y, z) == 4)
 		{
-			south_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+			south_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		}
 		if(chunk.return_data(x, y, z) == 5)
 		{
-			bottom_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+			bottom_check(relationships, cur_component, chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 		}
 	}
 	
@@ -711,6 +723,7 @@ void find_component_inputs(std::vector<relationship_table>& relationships, std::
 {
 	bool_chunk checked[31][31][31];
 	short offset_x, offset_y, offset_z;
+	short power = 16;
 	chunk_class cur_chunk;
 	
 	cur_chunk.extract_section_data(chunk);
@@ -722,7 +735,7 @@ void find_component_inputs(std::vector<relationship_table>& relationships, std::
 	checked[offset_y][offset_z][offset_x].checked = true;
 	checked[offset_y][offset_z][offset_x].chunk = cur_chunk.return_chunk();
 	
-	find_component_inputs(relationships, cur_component, cur_chunk, x, y, z, offset_x, offset_y, offset_z, checked);
+	find_component_inputs(relationships, cur_component, cur_chunk, x, y, z, offset_x, offset_y, offset_z, checked, power);
 }
 
 void rm_dup_relationship(std::vector<relationship_table>& relationships)
@@ -733,7 +746,8 @@ void rm_dup_relationship(std::vector<relationship_table>& relationships)
 		{
 			if((relationships[i].output.compare(relationships[j].output) == 0) && (relationships[i].input.compare(relationships[j].input)==0))
 			{
-				relationships.erase(relationships.begin()+j-1);
+				relationships.erase(relationships.begin()+j);
+				j--;
 			}
 		}
 	}

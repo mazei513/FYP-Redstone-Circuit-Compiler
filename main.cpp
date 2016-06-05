@@ -1,4 +1,5 @@
 #include "interpreter.hpp"
+#include "toVer.hpp"
 
 int main()
 {
@@ -19,6 +20,8 @@ int main()
 	// print_component_labels();
 	
 	relationships = interpret_circuit();
+	
+	create_module(relationships);
 	
 	return 0;
 }
