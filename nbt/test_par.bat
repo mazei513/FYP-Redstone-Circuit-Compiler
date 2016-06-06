@@ -1,19 +1,22 @@
 @echo off
 cd ..
 mkdir chunks
-cd nbt
+cd nbt/
 echo Converting nbt files to YAML
-FOR /D %%G IN ("r.*") DO (
-	FOR %%i IN ("%%G/*.nbt") DO call :loop %%G %%i
+FOR /D %%G IN ("region/r.*") DO (
+	FOR %%i IN ("region/%%G/*.nbt") DO call :loop %%G %%i
 )
+ping 192.0.2.2 -n 1 -w 5000 > nul
+echo Finished conversion
 echo Making list of chunks
 DIR "../chunks/"*.nbt /b > ../chunk.lst
+rmdir /s /q region
 goto :eof
 
 :loop
 call :checkinstances
 if %INSTANCES% LSS 5 (
-    start /wait /b python nbt2yaml -n %~1/%~2 > ../chunks/%~1.%~2
+    start /wait /b python nbt2yaml -n region/%~1/%~2 > ../chunks/%~1.%~2
     goto :eof
 )
 rem wait a second, can be adjusted with -w (-n 2 because the first ping returns immediately;

@@ -767,8 +767,8 @@ std::vector<relationship_table> interpret_circuit()
 	}
 	rm_dup_relationship(relationships);
 	
-	for(int i=0; i<relationships.size(); i++)
-		std::cout << relationships[i].input << " => " << relationships[i].output << std::endl;
+	// for(int i=0; i<relationships.size(); i++)
+		// std::cout << relationships[i].input << " => " << relationships[i].output << std::endl;
 	
 	return relationships;
 }
