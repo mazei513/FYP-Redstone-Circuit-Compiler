@@ -1,0 +1,31 @@
+|top_module
+SW[0] => SW[0].IN1
+SW[1] => SW[1].IN1
+SW[2] => SW[2].IN1
+SW[3] => SW[3].IN1
+SW[4] => ~NO_FANOUT~
+SW[5] => ~NO_FANOUT~
+SW[6] => ~NO_FANOUT~
+SW[7] => ~NO_FANOUT~
+SW[8] => ~NO_FANOUT~
+SW[9] => ~NO_FANOUT~
+LEDG[0] <= circuit_logic:SEG0.port4
+LEDG[1] <= <GND>
+LEDG[2] <= <GND>
+LEDG[3] <= <GND>
+LEDG[4] <= <GND>
+LEDG[5] <= <GND>
+LEDG[6] <= <GND>
+LEDG[7] <= <GND>
+LEDG[8] <= <GND>
+LEDG[9] <= <GND>
+
+
+|top_module|circuit_logic:SEG0
+L1 => T1.IN0
+L2 => T1.IN1
+L3 => T2.IN0
+L4 => T2.IN1
+O1 <= O1.DB_MAX_OUTPUT_PORT_TYPE
+
+

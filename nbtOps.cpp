@@ -131,20 +131,22 @@ std::string chunk_class::new_chunk_str(int x, int z)
 	std::string temp_str;
 	int temp_int;
 	
-	temp_int = x/32;
+	temp_int = x>>5;
 	new_chunk += std::to_string(temp_int);
 	
 	new_chunk += ".";
 	
-	temp_int = z/32;
+	temp_int = z>>5;
 	new_chunk += std::to_string(temp_int);
 	
 	new_chunk += ".";
 	
-	temp_int = (x%32) + (z%32)*32;
+	temp_int = (x&31) + ((z&31)<<5);
 	new_chunk += std::to_string(temp_int);
 	
 	new_chunk += ".nbt";
+	
+	// std::cout << new_chunk << std::endl;
 	
 	return new_chunk;
 }
@@ -183,8 +185,12 @@ void chunk_class::chunk_bound(int& x, int& z, int next_x, int next_z)
 		load=true;
 	}
 	
+	
 	if(load)
+	{
+		// std::cout << x_pos << " " << z_pos << std::endl;
 		extract_section_data(new_chunk_str(x_pos, z_pos));
+	}
 }
 
 void chunk_class::print_chunk()

@@ -2,6 +2,7 @@
 #define __tover_hpp__
 #include <string>
 #include <iostream>
+#include <fstream>
 #include "interpreter.hpp"
 #include <vector>
 #include <sstream>
@@ -14,4 +15,5 @@ std::string module_header(std::vector<std::string> inputs, std::vector<std::stri
 std::string create_wires(std::vector<std::string> torches);
 std::string assign_logic(std::vector<relationship_table> relationships);
 void create_module(std::vector<relationship_table> relationships);
+void create_top_file(std::vector<relationship_table> relationships);
 #endif

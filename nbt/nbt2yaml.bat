@@ -11,6 +11,8 @@ echo Finished conversion
 echo Making list of chunks
 DIR "../chunks/"*.nbt /b > ../chunk.lst
 rmdir /s /q region
+echo Conversion from NBT to YAML completed
+ping 192.0.2.2 -n 1 -w 5000 > nul
 goto :eof
 
 :loop

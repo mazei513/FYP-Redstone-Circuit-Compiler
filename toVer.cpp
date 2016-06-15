@@ -89,18 +89,23 @@ std::string module_header(std::vector<std::string> inputs, std::vector<std::stri
 
 std::string create_wires(std::vector<std::string> torches)
 {
-	std::stringstream ss;
-	
-	ss << "\twire";
-	for(int i=0; i<torches.size(); i++)
+	if(torches.size() > 0)
 	{
-		if(i > 0)
-			ss << ",";
-		ss << " " << torches[i];
+		std::stringstream ss;
+		
+		ss << "\twire";
+		for(int i=0; i<torches.size(); i++)
+		{
+			if(i > 0)
+				ss << ",";
+			ss << " " << torches[i];
+		}
+		ss << ";" << std::endl;
+		
+		return ss.str();
 	}
-	ss << ";" << std::endl;
-	
-	return ss.str();
+	else
+		return "";
 }
 
 std::string assign_logic(std::vector<relationship_table> relationships)
@@ -157,8 +162,51 @@ void create_module(std::vector<relationship_table> relationships)
 	std::string wires = create_wires(list_torches(relationships));
 	std::string logic = assign_logic(relationships);
 	std::string module_end = "endmodule";
+	std::ofstream os;
+	os.open("QuartusTemplate/circuit_logic.v", std::ios::trunc);
 	
-	std::cout << header << wires << logic << module_end;
+	std::cout << header << wires << logic << module_end << std::endl;
+	os << header << wires << logic << module_end;
+	
+	os.close();
+}
+
+void create_top_file(std::vector<relationship_table> relationships)
+{
+	std::string header = "module top_module (\n\tSW,\n\tLEDG\n\t);\n";
+	std::string sw = "\tinput [9:0] SW;\n";
+	std::string led = "\toutput [9:0] LEDG;\n";
+	std::string end = "endmodule";
+	std::string module = "\tcircuit_logic SEG0 (";
+	std::vector<std::string> inputs = list_inputs(relationships);
+	std::vector<std::string> outputs = list_outputs(relationships);
+	std::stringstream ss;
+	std::ofstream os;
+	bool first = true;
+	
+	for(int i=0; i<inputs.size(); i++)
+	{
+		if(!first)
+		{
+			ss << ", ";
+		}
+		ss << "SW[" << i << "]";
+		first = false;
+	}
+	for(int i=0; i<outputs.size(); i++)
+	{
+		ss << ", LEDG[" << i << "]";
+	}
+	ss << ");" << std::endl;
+	
+	module += ss.str();
+	
+	os.open("QuartusTemplate/top_module.v", std::ios::trunc);
+	
+	std::cout << header << sw << led << module << end << std::endl;
+	os << header << sw << led << module << end;
+	
+	os.close();
 }
 
 // int main()

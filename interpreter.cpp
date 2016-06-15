@@ -82,7 +82,15 @@ void print_component_labels()
 {
 	for(int i=0;i<component_labels.size();i++)
 	{
-		std::cout << component_labels[i].x << " " << component_labels[i].y << " " << component_labels[i].z << " " << component_labels[i].label << std::endl;
+		std::cout << component_labels[i].x << " " << component_labels[i].y << " " << component_labels[i].z << " " << component_labels[i].label << " "  << component_labels[i].chunk << std::endl;
+	}
+}
+
+void print_active_component_labels()
+{
+	for(int i=0;i<active_components.size();i++)
+	{
+		std::cout << active_components[i].x << " " << active_components[i].y << " " << active_components[i].z << " " << active_components[i].label << " "  << active_components[i].chunk << std::endl;
 	}
 }
 
@@ -233,32 +241,32 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 			}
 			// else check lever on all sides of block
 			chunk.chunk_bound(x, z, x, z+1);
-			if(is_lever(x, y+1, z+1, chunk) && (chunk.return_data(x, y+1, z+1) == 5 || chunk.return_data(x, y+1, z+1) == 6))
+			if(is_lever(x, y+1, z+1, chunk) && (chunk.return_data(x, y+1, z+1) == 5 || chunk.return_data(x, y+1, z+1) == 6 || chunk.return_data(x, y+1, z+1) == 13 || chunk.return_data(x, y+1, z+1) == 14))
 			{
 				temp = {component_name(x, y+1, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x, z+2);
-			if(is_lever(x, y, z+2, chunk) && chunk.return_data(x, y, z+2) == 3)
+			if(is_lever(x, y, z+2, chunk) && (chunk.return_data(x, y, z+2) == 3 || chunk.return_data(x, y, z+2) == 11))
 			{
 				temp = {component_name(x, y, z+2, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x+1, z+1);
-			if(is_lever(x+1, y, z+1, chunk) && chunk.return_data(x+1, y, z+1) == 1)
+			if(is_lever(x+1, y, z+1, chunk) && (chunk.return_data(x+1, y, z+1) == 1 || chunk.return_data(x+1, y, z+1) == 9))
 			{
 				temp = {component_name(x+1, y, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x-1, z+1);
-			if(is_lever(x-1, y, z+1, chunk) && chunk.return_data(x-1, y, z+1) == 2)
+			if(is_lever(x-1, y, z+1, chunk) && (chunk.return_data(x-1, y, z+1) == 2 || chunk.return_data(x-1, y, z+1) == 10))
 			{
 				temp = {component_name(x-1, y, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			// for power source from underneath opaque block, check for torches as well
 			chunk.chunk_bound(x, z, x, z+1);
-			if(is_torch(x, y-1, z+1, chunk) || (is_lever(x, y-1, z+1, chunk) && (chunk.return_data(x, y-1, z+1) == 0 || chunk.return_data(x, y-1, z+1) == 7 || chunk.return_data(x, y-1, z+1) == 3)))
+			if(is_torch(x, y-1, z+1, chunk) || (is_lever(x, y-1, z+1, chunk) && (chunk.return_data(x, y-1, z+1) == 0 || chunk.return_data(x, y-1, z+1) == 7 || chunk.return_data(x, y-1, z+1) == 3 || chunk.return_data(x, y-1, z+1) == 8 || chunk.return_data(x, y-1, z+1) == 15 || chunk.return_data(x, y-1, z+1) == 11)))
 			{
 				temp = {component_name(x, y-1, z+1, chunk), cur_component};
 				relationships.push_back(temp);
@@ -267,8 +275,26 @@ void south_check(std::vector<relationship_table>& relationships, std::string& cu
 	}
 	// else check dust from adjacent below
 	else if(is_dust(x, y-1, z+1, chunk) && !checked[offset_y-1][offset_z+1][offset_x].checked)
-		find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked, power-1);
-	else if(is_lever(x, y-1, z+1, chunk) && chunk.return_data(x, y-1, z+1) == 3)
+	{
+		if(is_dust(x+1, y-1, z+1, chunk) || (is_dust(x-1, y-1, z+1, chunk)))
+		{
+			if(is_dust(x, y, z, chunk))
+				find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked, power-1);
+		}
+		else
+		{			
+			if((is_dust(x+1, y-2, z+1, chunk) && !opaque_block(x-1, y-1, z+1, chunk)) && (is_dust(x+1, y-2, z+1, chunk) && !opaque_block(x-1, y-1, z+1, chunk)) && ((is_dust(x+1, y, z+1, chunk) || (is_dust(x-1, y, z+1, chunk))) && !opaque_block(x+1, y, z, chunk)))
+			{
+				if(is_dust(x, y, z, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked, power-1);
+			}
+			else
+			{
+				find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked, power-1);
+			}
+		}
+	}
+	else if(is_lever(x, y-1, z+1, chunk) && (chunk.return_data(x, y-1, z+1) == 3 || chunk.return_data(x, y-1, z+1) == 11))
 	{
 		temp = {component_name(x, y-1, z+1, chunk), cur_component};
 		relationships.push_back(temp);
@@ -326,32 +352,32 @@ void north_check(std::vector<relationship_table>& relationships, std::string& cu
 			}
 			// else check lever on all sides of block
 			chunk.chunk_bound(x, z, x, z-1);
-			if(is_lever(x, y+1, z-1, chunk) && (chunk.return_data(x, y+1, z-1) == 5 || chunk.return_data(x, y+1, z-1) == 6))
+			if(is_lever(x, y+1, z-1, chunk) && (chunk.return_data(x, y+1, z-1) == 5 || chunk.return_data(x, y+1, z-1) == 6 || chunk.return_data(x, y+1, z-1) == 13 || chunk.return_data(x, y+1, z-1) == 14))
 			{
 				temp = {component_name(x, y+1, z-1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x, z-2);
-			if(is_lever(x, y, z-2, chunk) && chunk.return_data(x, y, z-2) == 4)
+			if(is_lever(x, y, z-2, chunk) && (chunk.return_data(x, y, z-2) == 4 || chunk.return_data(x, y, z-2) == 12))
 			{
 				temp = {component_name(x, y, z-2, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x+1, z-1);
-			if(is_lever(x+1, y, z-1, chunk) && chunk.return_data(x+1, y, z-1) == 1)
+			if(is_lever(x+1, y, z-1, chunk) && (chunk.return_data(x+1, y, z-1) == 1 || chunk.return_data(x+1, y, z-1) == 9))
 			{
 				temp = {component_name(x+1, y, z-1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x-1, z-1);
-			if(is_lever(x-1, y, z-1, chunk) && chunk.return_data(x-1, y, z-1) == 2)
+			if(is_lever(x-1, y, z-1, chunk) && (chunk.return_data(x-1, y, z-1) == 2 || chunk.return_data(x-1, y, z-1) == 10))
 			{
 				temp = {component_name(x-1, y, z-1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			// for power source from underneath opaque block, check for torches as well
 			chunk.chunk_bound(x, z, x, z-1);
-			if(is_torch(x, y-1, z-1, chunk) || (is_lever(x, y-1, z-1, chunk) && (chunk.return_data(x, y-1, z-1) == 0 || chunk.return_data(x, y-1, z-1) == 7 || chunk.return_data(x, y-1, z-1) == 4)))
+			if(is_torch(x, y-1, z-1, chunk) || (is_lever(x, y-1, z-1, chunk) && (chunk.return_data(x, y-1, z-1) == 0 || chunk.return_data(x, y-1, z-1) == 7 || chunk.return_data(x, y-1, z-1) == 4 || chunk.return_data(x, y-1, z-1) == 8 || chunk.return_data(x, y-1, z-1) == 15 || chunk.return_data(x, y-1, z-1) == 12)))
 			{
 				temp = {component_name(x, y-1, z-1, chunk), cur_component};
 				relationships.push_back(temp);
@@ -360,8 +386,26 @@ void north_check(std::vector<relationship_table>& relationships, std::string& cu
 	}
 	// else check dust from adjacent below
 	else if(is_dust(x, y-1, z-1, chunk) && !checked[offset_y-1][offset_z-1][offset_x].checked)
-		find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked, power-1);
-	else if(is_lever(x, y-1, z-1, chunk) && chunk.return_data(x, y-1, z-1) == 4)
+	{
+		if(is_dust(x+1, y-1, z-1, chunk) || (is_dust(x-1, y-1, z-1, chunk)))
+		{
+			if(is_dust(x, y, z, chunk))
+				find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked, power-1);
+		}
+		else
+		{			
+			if((is_dust(x+1, y-2, z-1, chunk) && !opaque_block(x-1, y-1, z-1, chunk)) && (is_dust(x+1, y-2, z-1, chunk) && !opaque_block(x-1, y-1, z-1, chunk)) && ((is_dust(x+1, y, z-1, chunk) || (is_dust(x-1, y, z-1, chunk))) && !opaque_block(x+1, y, z, chunk)))
+			{
+				if(is_dust(x, y, z, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked, power-1);
+			}
+			else
+			{
+				find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked, power-1);
+			}
+		}
+	}
+	else if(is_lever(x, y-1, z-1, chunk) && (chunk.return_data(x, y-1, z-1) == 4 || chunk.return_data(x, y-1, z-1) == 12))
 	{
 		temp = {component_name(x, y-1, z-1, chunk), cur_component};
 		relationships.push_back(temp);
@@ -420,25 +464,25 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 			}
 			// else check lever on all sides of block
 			chunk.chunk_bound(x, z, x+1, z);
-			if(is_lever(x+1, y+1, z, chunk) && (chunk.return_data(x+1, y+1, z) == 5 || chunk.return_data(x+1, y+1, z) == 6))
+			if(is_lever(x+1, y+1, z, chunk) && (chunk.return_data(x+1, y+1, z) == 5 || chunk.return_data(x+1, y+1, z) == 6 || chunk.return_data(x+1, y+1, z) == 13 || chunk.return_data(x+1, y+1, z) == 14))
 			{
 				temp = {component_name(x+1, y+1, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x+2, z);
-			if(is_lever(x+2, y, z, chunk) && chunk.return_data(x+2, y, z) == 1)
+			if(is_lever(x+2, y, z, chunk) && (chunk.return_data(x+2, y, z) == 1 || chunk.return_data(x+2, y, z) == 9))
 			{
 				temp = {component_name(x+2, y, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x+1, z-1);
-			if(is_lever(x+1, y, z-1, chunk) && chunk.return_data(x+1, y, z-1) == 4)
+			if(is_lever(x+1, y, z-1, chunk) && (chunk.return_data(x+1, y, z-1) == 4 || chunk.return_data(x+1, y, z-1) == 12))
 			{
 				temp = {component_name(x+1, y, z-1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x+1, z+1);
-			if(is_lever(x+1, y, z+1, chunk) && chunk.return_data(x+1, y, z+1) == 3)
+			if(is_lever(x+1, y, z+1, chunk) && (chunk.return_data(x+1, y, z+1) == 3 || chunk.return_data(x+1, y, z+1) == 11))
 			{
 				temp = {component_name(x+1, y, z+1, chunk), cur_component};
 				relationships.push_back(temp);
@@ -446,7 +490,7 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 			// for power source from underneath opaque block, check for torches as well
 			
 			chunk.chunk_bound(x, z, x, z);
-			if(is_torch(x+1, y-1, z, chunk) || (is_lever(x+1, y-1, z, chunk) && (chunk.return_data(x+1, y-1, z) == 0 || chunk.return_data(x+1, y-1, z) == 7 || chunk.return_data(x+1, y-1, z) == 1)))
+			if(is_torch(x+1, y-1, z, chunk) || (is_lever(x+1, y-1, z, chunk) && (chunk.return_data(x+1, y-1, z) == 0 || chunk.return_data(x+1, y-1, z) == 7 || chunk.return_data(x+1, y-1, z) == 1 || chunk.return_data(x+1, y-1, z) == 8 || chunk.return_data(x+1, y-1, z) == 15 || chunk.return_data(x+1, y-1, z) == 9)))
 			{
 				temp = {component_name(x+1, y-1, z, chunk), cur_component};
 				relationships.push_back(temp);
@@ -457,9 +501,25 @@ void east_check(std::vector<relationship_table>& relationships, std::string& cur
 	// else check dust from adjacent below
 	else if(is_dust(x+1, y-1, z, chunk) && !checked[offset_y-1][offset_z][offset_x+1].checked)
 	{
-		find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked, power-1);
+		if(is_dust(x+1, y-1, z+1, chunk) || (is_dust(x+1, y-1, z-1, chunk)))
+		{
+			if(is_dust(x, y, z, chunk))
+				find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked, power-1);
+		}
+		else
+		{			
+			if((is_dust(x+1, y-2, z+1, chunk) && !opaque_block(x+1, y-1, z+1, chunk)) && (is_dust(x+1, y-2, z-1, chunk) && !opaque_block(x+1, y-1, z-1, chunk)) && ((is_dust(x+1, y, z+1, chunk) || (is_dust(x+1, y, z-1, chunk))) && !opaque_block(x+1, y, z, chunk)))
+			{
+				if(is_dust(x, y, z, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked, power-1);
+			}
+			else
+			{
+				find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked, power-1);
+			}
+		}
 	}
-	else if(is_lever(x+1, y-1, z, chunk) && chunk.return_data(x+1, y-1, z) == 1)
+	else if(is_lever(x+1, y-1, z, chunk) && (chunk.return_data(x+1, y-1, z) == 1 || chunk.return_data(x+1, y-1, z) == 9))
 	{
 		temp = {component_name(x+1, y-1, z, chunk), cur_component};
 		relationships.push_back(temp);
@@ -518,32 +578,32 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 			}
 			chunk.chunk_bound(x, z, x-1, z);
 			// else check lever on all sides of block
-			if(is_lever(x-1, y+1, z, chunk) && (chunk.return_data(x-1, y+1, z) == 5 || chunk.return_data(x-1, y+1, z) == 6))
+			if(is_lever(x-1, y+1, z, chunk) && (chunk.return_data(x-1, y+1, z) == 5 || chunk.return_data(x-1, y+1, z) == 6 || chunk.return_data(x-1, y+1, z) == 13 || chunk.return_data(x-1, y+1, z) == 14))
 			{
 				temp = {component_name(x-1, y+1, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x-2, z);
-			if(is_lever(x-2, y, z, chunk) && chunk.return_data(x-2, y, z) == 2)
+			if(is_lever(x-2, y, z, chunk) && (chunk.return_data(x-2, y, z) == 2 || chunk.return_data(x-2, y, z) == 10))
 			{
 				temp = {component_name(x-2, y, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x-1, z-1);
-			if(is_lever(x-1, y, z-1, chunk) && chunk.return_data(x-1, y, z-1) == 4)
+			if(is_lever(x-1, y, z-1, chunk) && (chunk.return_data(x-1, y, z-1) == 4 || chunk.return_data(x-1, y, z-1) == 12))
 			{
 				temp = {component_name(x-1, y, z-1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x-1, z+1);
-			if(is_lever(x-1, y, z+1, chunk) && chunk.return_data(x-1, y, z+1) == 3)
+			if(is_lever(x-1, y, z+1, chunk) && (chunk.return_data(x-1, y, z+1) == 3 || chunk.return_data(x-1, y, z+1) == 11))
 			{
 				temp = {component_name(x-1, y, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x-1, z);
 			// for power source from underneath opaque block, check for torches as well
-			if(is_torch(x-1, y-1, z, chunk) || (is_lever(x-1, y-1, z, chunk) && (chunk.return_data(x-1, y-1, z) == 0 || chunk.return_data(x-1, y-1, z) == 7 || chunk.return_data(x-1, y-1, z) == 2)))
+			if(is_torch(x-1, y-1, z, chunk) || (is_lever(x-1, y-1, z, chunk) && (chunk.return_data(x-1, y-1, z) == 0 || chunk.return_data(x-1, y-1, z) == 7 || chunk.return_data(x-1, y-1, z) == 2 || chunk.return_data(x-1, y-1, z) == 8 || chunk.return_data(x-1, y-1, z) == 15 || chunk.return_data(x-1, y-1, z) == 10)))
 			{
 				temp = {component_name(x-1, y-1, z, chunk), cur_component};
 				relationships.push_back(temp);
@@ -552,8 +612,26 @@ void west_check(std::vector<relationship_table>& relationships, std::string& cur
 	}
 	// else check dust from adjacent below
 	else if(is_dust(x-1, y-1, z, chunk) && !checked[offset_y-1][offset_z][offset_x-1].checked)
-		find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked, power-1);
-	else if(is_lever(x-1, y-1, z, chunk) && chunk.return_data(x-1, y-1, z) == 2)
+	{
+		if(is_dust(x-1, y-1, z+1, chunk) || (is_dust(x-1, y-1, z-1, chunk)))
+		{
+			if(is_dust(x, y, z, chunk))
+				find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked, power-1);
+		}
+		else
+		{			
+			if((is_dust(x-1, y-2, z+1, chunk) && !opaque_block(x-1, y-1, z+1, chunk)) && (is_dust(x-1, y-2, z-1, chunk) && !opaque_block(x-1, y-1, z-1, chunk)) && ((is_dust(x-1, y, z+1, chunk) || (is_dust(x-1, y, z-1, chunk))) && !opaque_block(x-1, y, z, chunk)))
+			{
+				if(is_dust(x, y, z, chunk))
+					find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked, power-1);
+			}
+			else
+			{
+				find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked, power-1);
+			}
+		}
+	}
+	else if(is_lever(x-1, y-1, z, chunk) && (chunk.return_data(x-1, y-1, z) == 2 || chunk.return_data(x-1, y-1, z) == 10))
 	{
 		temp = {component_name(x-1, y-1, z, chunk), cur_component};
 		relationships.push_back(temp);
@@ -570,31 +648,31 @@ void top_check(std::vector<relationship_table>& relationships, std::string& cur_
 	if(opaque_block(x, y+1, z, chunk))
 	{
 		chunk.chunk_bound(x, z, x, z);
-		if(is_lever(x, y+2, z, chunk) && (chunk.return_data(x, y+2, z) == 5 || chunk.return_data(x, y+2, z) == 6))
+		if(is_lever(x, y+2, z, chunk) && (chunk.return_data(x, y+2, z) == 5 || chunk.return_data(x, y+2, z) == 6 || chunk.return_data(x, y+2, z) == 13 || chunk.return_data(x, y+2, z) == 14))
 		{
 			temp = {component_name(x, y+2, z, chunk), cur_component};
 			relationships.push_back(temp);
 		}
 		chunk.chunk_bound(x, z, x-1, z);
-		if(is_lever(x-1, y+1, z, chunk) && chunk.return_data(x-1, y+1, z) == 2)
+		if(is_lever(x-1, y+1, z, chunk) && (chunk.return_data(x-1, y+1, z) == 2 || chunk.return_data(x-1, y+1, z) == 10))
 		{
 			temp = {component_name(x-1, y+1, z, chunk), cur_component};
 			relationships.push_back(temp);
 		}
 		chunk.chunk_bound(x, z, x+1, z);
-		if(is_lever(x+1, y+1, z, chunk) && chunk.return_data(x+1, y+1, z) == 1)
+		if(is_lever(x+1, y+1, z, chunk) && (chunk.return_data(x+1, y+1, z) == 1 || chunk.return_data(x+1, y+1, z) == 9))
 		{
 			temp = {component_name(x+1, y+1, z, chunk), cur_component};
 			relationships.push_back(temp);
 		}
 		chunk.chunk_bound(x, z, x, z+1);
-		if(is_lever(x, y+1, z+1, chunk) && chunk.return_data(x, y+1, z+1) == 3)
+		if(is_lever(x, y+1, z+1, chunk) && (chunk.return_data(x, y+1, z+1) == 3 || chunk.return_data(x, y+1, z+1) == 11))
 		{
 			temp = {component_name(x, y+1, z+1, chunk), cur_component};
 			relationships.push_back(temp);
 		}
 		chunk.chunk_bound(x, z, x, z-1);
-		if(is_lever(x, y+1, z-1, chunk) && chunk.return_data(x, y+1, z-1) == 4)
+		if(is_lever(x, y+1, z-1, chunk) && (chunk.return_data(x, y+1, z-1) == 4 || chunk.return_data(x, y+1, z-1) == 12))
 		{
 			temp = {component_name(x, y+1, z-1, chunk), cur_component};
 			relationships.push_back(temp);
@@ -609,59 +687,125 @@ void bottom_check(std::vector<relationship_table>& relationships, std::string& c
 		return;
 	relationship_table temp;
 	
-	if(is_torch(x, y-1, z, chunk) || (is_lever(x, y-1, z, chunk) && (chunk.return_data(x, y-1, z) == 0 || chunk.return_data(x, y-1, z) == 7)))
+	if(is_torch(x, y-1, z, chunk) || (is_lever(x, y-1, z, chunk) && (chunk.return_data(x, y-1, z) == 0 || chunk.return_data(x, y-1, z) == 7 || chunk.return_data(x, y-1, z) == 8 || chunk.return_data(x, y-1, z) == 15)))
 	{
 		temp = {component_name(x, y-1, z, chunk), cur_component};
 		relationships.push_back(temp);
 	}
 	else
 	{
+		chunk.chunk_bound(x, z, x, z);
 		if(opaque_block(x, y-1, z, chunk))
 		{
-			if(is_torch(x, y-2, z, chunk) || (is_lever(x, y-2, z, chunk) && (chunk.return_data(x, y-2, z) == 0 || chunk.return_data(x, y-2, z) == 7)))
+			if(is_torch(x, y-2, z, chunk) || (is_lever(x, y-2, z, chunk) && (chunk.return_data(x, y-2, z) == 0 || chunk.return_data(x, y-2, z) == 7 || chunk.return_data(x, y-2, z) == 8 || chunk.return_data(x, y-2, z) == 15)))
 			{
 				temp = {component_name(x, y-2, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x-1, z);
-			if(is_lever(x-1, y-1, z, chunk) && (chunk.return_data(x-1, y-1, z) == 2))
+			if(is_lever(x-1, y-1, z, chunk) && (chunk.return_data(x-1, y-1, z) == 2 || chunk.return_data(x-1, y-1, z) == 10))
 			{
 				temp = {component_name(x-1, y-1, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x+1, z);
-			if(is_lever(x+1, y-1, z, chunk) && (chunk.return_data(x+1, y-1, z) == 1))
+			if(is_lever(x+1, y-1, z, chunk) && (chunk.return_data(x+1, y-1, z) == 1 || chunk.return_data(x+1, y-1, z) == 9))
 			{
 				temp = {component_name(x+1, y-1, z, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x, z+1);
-			if(is_lever(x, y-1, z+1, chunk) && (chunk.return_data(x, y-1, z+1) == 3))
+			if(is_lever(x, y-1, z+1, chunk) && (chunk.return_data(x, y-1, z+1) == 3 || chunk.return_data(x, y-1, z+1) == 11))
 			{
 				temp = {component_name(x, y-1, z+1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 			chunk.chunk_bound(x, z, x, z-1);
-			if(is_lever(x, y-1, z-1, chunk) && (chunk.return_data(x, y-1, z-1) == 4))
+			if(is_lever(x, y-1, z-1, chunk) && (chunk.return_data(x, y-1, z-1) == 4 || chunk.return_data(x, y-1, z-1) == 12))
 			{
 				temp = {component_name(x, y-1, z-1, chunk), cur_component};
 				relationships.push_back(temp);
 			}
 		}
+		chunk.chunk_bound(x, z, x, z);
 		if(!is_dust(x, y, z, chunk) && opaque_block(x, y-1, z, chunk))
 		{
 			chunk.chunk_bound(x, z, x-1, z);
 			if(is_dust(x-1, y-1, z, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked, power-1);
+			{
+				if(is_dust(x-1, y-1, z+1, chunk) || (is_dust(x-1, y-1, z-1, chunk)))
+				{
+					//do nothing
+				}
+				else
+				{			
+					if((is_dust(x-1, y-2, z+1, chunk) && !opaque_block(x-1, y-1, z+1, chunk)) && (is_dust(x-1, y-2, z-1, chunk) && !opaque_block(x-1, y-1, z-1, chunk)) && ((is_dust(x-1, y, z+1, chunk) || (is_dust(x-1, y, z-1, chunk))) && !opaque_block(x-1, y, z, chunk)))
+					{
+						//do nothing
+					}
+					else
+					{
+						find_component_inputs(relationships, cur_component, chunk, x-1, y-1, z, offset_x-1, offset_y-1, offset_z, checked, power-1);
+					}
+				}
+			}
 			chunk.chunk_bound(x, z, x+1, z);
 			if(is_dust(x+1, y-1, z, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked, power-1);
+			{
+				if(is_dust(x+1, y-1, z+1, chunk) || (is_dust(x+1, y-1, z-1, chunk)))
+				{
+					//do nothing
+				}
+				else
+				{			
+					if((is_dust(x+1, y-2, z+1, chunk) && !opaque_block(x+1, y-1, z+1, chunk)) && (is_dust(x+1, y-2, z-1, chunk) && !opaque_block(x+1, y-1, z-1, chunk)) && ((is_dust(x+1, y, z+1, chunk) || (is_dust(x+1, y, z-1, chunk))) && !opaque_block(x+1, y, z, chunk)))
+					{
+						//do nothing
+					}
+					else
+					{
+						find_component_inputs(relationships, cur_component, chunk, x+1, y-1, z, offset_x+1, offset_y-1, offset_z, checked, power-1);
+					}
+				}
+			}
 			chunk.chunk_bound(x, z, x, z-1);
 			if(is_dust(x, y-1, z-1, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked, power-1);
+			{
+				if(is_dust(x+1, y-1, z-1, chunk) || (is_dust(x-1, y-1, z-1, chunk)))
+				{
+					//do nothing
+				}
+				else
+				{			
+					if((is_dust(x+1, y-2, z-1, chunk) && !opaque_block(x-1, y-1, z-1, chunk)) && (is_dust(x+1, y-2, z-1, chunk) && !opaque_block(x-1, y-1, z-1, chunk)) && ((is_dust(x+1, y, z-1, chunk) || (is_dust(x-1, y, z-1, chunk))) && !opaque_block(x+1, y, z, chunk)))
+					{
+						//do nothing
+					}
+					else
+					{
+						find_component_inputs(relationships, cur_component, chunk, x, y-1, z-1, offset_x, offset_y-1, offset_z-1, checked, power-1);
+					}
+				}
+			}
 			chunk.chunk_bound(x, z, x, z+1);
 			if(is_dust(x, y-1, z+1, chunk))
-				find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked, power-1);
+			{
+				if(is_dust(x+1, y-1, z+1, chunk) || (is_dust(x-1, y-1, z+1, chunk)))
+				{
+					//do nothing
+				}
+				else
+				{			
+					if((is_dust(x+1, y-2, z+1, chunk) && !opaque_block(x-1, y-1, z+1, chunk)) && (is_dust(x+1, y-2, z+1, chunk) && !opaque_block(x-1, y-1, z+1, chunk)) && ((is_dust(x+1, y, z+1, chunk) || (is_dust(x-1, y, z+1, chunk))) && !opaque_block(x+1, y, z, chunk)))
+					{
+						//do nothing
+					}
+					else
+					{
+						find_component_inputs(relationships, cur_component, chunk, x, y-1, z+1, offset_x, offset_y-1, offset_z+1, checked, power-1);
+					}
+				}
+			}
 		}
 	}
 	chunk.chunk_bound(x, z, x, z);

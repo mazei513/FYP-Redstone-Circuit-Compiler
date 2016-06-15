@@ -42,6 +42,7 @@ std::string cur_torch_label();
 std::string cur_lamp_label();
 void label_components(chunk_class chunk);
 void print_component_labels();
+void print_active_component_labels();
 std::string component_name(int x, int y, int z, chunk_class chunk);
 std::string find_active_component(chunk_class chunk, int &x, int &y, int &z);
 bool air_block(int x, int y, int z, chunk_class chunk);

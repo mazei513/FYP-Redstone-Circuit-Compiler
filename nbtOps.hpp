@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdio>
 #include <sstream>
+#include <cmath>
 
 const std::string NBTFILEPATH = "chunks\\";
 

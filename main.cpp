@@ -18,10 +18,12 @@ int main()
 		label_components(cur_chunk);
 	}
 	// print_component_labels();
+	// print_active_component_labels();
 	
 	relationships = interpret_circuit();
 	
 	create_module(relationships);
+	create_top_file(relationships);
 	
 	return 0;
 }
